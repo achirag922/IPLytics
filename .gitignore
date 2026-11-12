@@ -1,0 +1,28 @@
+# Secrets / local config
+.env
+*.local
+
+# Backend (Maven)
+backend/target/
+!backend/.mvn/wrapper/maven-wrapper.properties
+
+# Frontend (Node)
+node_modules/
+frontend/dist/
+frontend/coverage/
+
+# Data: raw datasets are downloaded locally, never committed
+data/raw/*
+!data/raw/.gitkeep
+
+# IDE / OS
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/

@@ -1,0 +1,67 @@
+{
+  "meta": {"data_version": "1.1.0", "created": "2020-09-21", "revision": 1},
+  "info": {
+    "city": "Dubai",
+    "dates": ["2020-09-20"],
+    "event": {"name": "Indian Premier League", "match_number": 2},
+    "officials": {"umpires": ["Umpire C", "Umpire D"]},
+    "outcome": {"result": "tie", "eliminator": "Delhi Capitals"},
+    "overs": 20,
+    "player_of_match": ["MP Stoinis"],
+    "players": {
+      "Delhi Capitals": ["SS Iyer", "RR Pant", "MP Stoinis", "K Rabada"],
+      "Kings XI Punjab": ["KL Rahul", "N Pooran", "Mohammed Shami", "K Gowtham"]
+    },
+    "registry": {
+      "people": {
+        "SS Iyer": "id-iyer", "RR Pant": "id-pant", "MP Stoinis": "id-stoinis", "K Rabada": "id-rabada",
+        "KL Rahul": "id-rahul", "N Pooran": "id-pooran", "Mohammed Shami": "id-shami", "K Gowtham": "id-gowtham",
+        "Sarfaraz Khan": "id-sarfaraz"
+      }
+    },
+    "season": "2020/21",
+    "teams": ["Delhi Capitals", "Kings XI Punjab"],
+    "toss": {"decision": "field", "winner": "Kings XI Punjab"},
+    "venue": "Dubai International Cricket Stadium"
+  },
+  "innings": [
+    {
+      "team": "Delhi Capitals",
+      "overs": [{"over": 19, "deliveries": [
+        {"batter": "SS Iyer", "bowler": "Mohammed Shami", "non_striker": "RR Pant",
+         "runs": {"batter": 1, "extras": 0, "total": 1},
+         "wickets": [
+           {"kind": "run out", "player_out": "SS Iyer",
+            "fielders": [{"name": "KL Rahul"}, {"name": "Sarfaraz Khan", "substitute": true}]},
+           {"kind": "retired out", "player_out": "RR Pant"}
+         ]}
+      ]}]
+    },
+    {
+      "team": "Kings XI Punjab",
+      "overs": [{"over": 0, "deliveries": [
+        {"batter": "KL Rahul", "bowler": "K Rabada", "non_striker": "N Pooran",
+         "runs": {"batter": 2, "extras": 0, "total": 2}}
+      ]}],
+      "target": {"overs": 20, "runs": 158}
+    },
+    {
+      "team": "Kings XI Punjab",
+      "super_over": true,
+      "overs": [{"over": 0, "deliveries": [
+        {"batter": "KL Rahul", "bowler": "K Rabada", "non_striker": "N Pooran",
+         "runs": {"batter": 0, "extras": 0, "total": 0},
+         "wickets": [{"kind": "caught", "player_out": "KL Rahul", "fielders": [{"name": "RR Pant"}]}]}
+      ]}]
+    },
+    {
+      "team": "Delhi Capitals",
+      "super_over": true,
+      "target": {"overs": 1, "runs": 3},
+      "overs": [{"over": 0, "deliveries": [
+        {"batter": "RR Pant", "bowler": "Mohammed Shami", "non_striker": "SS Iyer",
+         "runs": {"batter": 2, "extras": 0, "total": 2}}
+      ]}]
+    }
+  ]
+}

@@ -20,6 +20,7 @@
     <properties>
         <java.version>17</java.version>
         <springdoc.version>2.8.17</springdoc.version>
+        <commons-csv.version>1.14.0</commons-csv.version>
     </properties>
 
     <dependencies>
@@ -56,9 +57,16 @@
             <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
         <dependency>
+            <!-- compile scope: ingestion bulk-loads via the driver's COPY API -->
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Ingestion -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+            <version>${commons-csv.version}</version>
         </dependency>
 
         <!-- Test -->

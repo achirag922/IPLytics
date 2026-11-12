@@ -14,6 +14,8 @@ frontend/coverage/
 # Data: raw datasets are downloaded locally, never committed
 data/raw/*
 !data/raw/.gitkeep
+data/cricsheet/*
+!data/cricsheet/.gitkeep
 
 # IDE / OS
 .idea/

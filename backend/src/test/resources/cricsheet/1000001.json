@@ -1,0 +1,39 @@
+{
+  "meta": {"data_version": "1.1.0", "created": "2010-03-21", "revision": 1},
+  "info": {
+    "city": "Mumbai",
+    "dates": ["2010-03-20"],
+    "event": {"name": "Indian Premier League", "match_number": 9},
+    "officials": {"umpires": ["Umpire A", "Umpire B"]},
+    "outcome": {"winner": "Mumbai Indians", "by": {"runs": 7}, "method": "D/L"},
+    "overs": 20,
+    "players": {
+      "Mumbai Indians": ["SR Tendulkar", "Harbhajan Singh"],
+      "Delhi Daredevils": ["G Gambhir", "DL Vettori"]
+    },
+    "registry": {
+      "people": {"SR Tendulkar": "id-sachin", "Harbhajan Singh": "id-bhajji", "G Gambhir": "id-gambhir", "DL Vettori": "id-vettori"}
+    },
+    "season": "2009/10",
+    "teams": ["Mumbai Indians", "Delhi Daredevils"],
+    "toss": {"decision": "bat", "winner": "Mumbai Indians"},
+    "venue": "Brabourne Stadium"
+  },
+  "innings": [
+    {
+      "team": "Mumbai Indians",
+      "overs": [{"over": 0, "deliveries": [
+        {"batter": "SR Tendulkar", "bowler": "DL Vettori", "non_striker": "Harbhajan Singh",
+         "runs": {"batter": 6, "extras": 0, "total": 6}}
+      ]}]
+    },
+    {
+      "team": "Delhi Daredevils",
+      "overs": [{"over": 0, "deliveries": [
+        {"batter": "G Gambhir", "bowler": "Harbhajan Singh", "non_striker": "DL Vettori",
+         "runs": {"batter": 1, "extras": 0, "total": 1}}
+      ]}],
+      "target": {"overs": 12, "runs": 110}
+    }
+  ]
+}

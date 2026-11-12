@@ -1,0 +1,65 @@
+{
+  "meta": {"data_version": "1.1.0", "created": "2011-05-06", "revision": 2},
+  "info": {
+    "balls_per_over": 6,
+    "city": "Bangalore",
+    "dates": ["2008-04-18"],
+    "event": {"name": "Indian Premier League", "match_number": 1},
+    "gender": "male",
+    "match_type": "T20",
+    "officials": {
+      "match_referees": ["J Srinath"],
+      "tv_umpires": ["AM Saheba"],
+      "umpires": ["Asad Rauf", "RE Koertzen"]
+    },
+    "outcome": {"winner": "Kolkata Knight Riders", "by": {"runs": 140}},
+    "overs": 20,
+    "player_of_match": ["BB McCullum"],
+    "players": {
+      "Kolkata Knight Riders": ["SC Ganguly", "BB McCullum", "RT Ponting", "AB Dinda"],
+      "Royal Challengers Bangalore": ["R Dravid", "W Jaffer", "P Kumar", "Z Khan"]
+    },
+    "registry": {
+      "people": {
+        "AB Dinda": "id-dinda", "BB McCullum": "id-mccullum", "P Kumar": "id-kumar", "R Dravid": "id-dravid",
+        "RT Ponting": "id-ponting", "SC Ganguly": "id-ganguly", "W Jaffer": "id-jaffer", "Z Khan": "id-zkhan",
+        "Asad Rauf": "id-rauf", "RE Koertzen": "id-koertzen", "AM Saheba": "id-saheba", "J Srinath": "id-srinath"
+      }
+    },
+    "season": "2007/08",
+    "team_type": "club",
+    "teams": ["Royal Challengers Bangalore", "Kolkata Knight Riders"],
+    "toss": {"decision": "field", "winner": "Royal Challengers Bangalore"},
+    "venue": "M Chinnaswamy Stadium"
+  },
+  "innings": [
+    {
+      "team": "Kolkata Knight Riders",
+      "overs": [
+        {"over": 0, "deliveries": [
+          {"actual_delivery": "0.1", "batter": "SC Ganguly", "bowler": "P Kumar", "non_striker": "BB McCullum",
+           "extras": {"legbyes": 1}, "runs": {"batter": 0, "extras": 1, "total": 1}},
+          {"actual_delivery": "0.2", "batter": "BB McCullum", "bowler": "P Kumar", "non_striker": "SC Ganguly",
+           "runs": {"batter": 4, "extras": 0, "non_boundary": true, "total": 4}},
+          {"actual_delivery": "0.3", "batter": "BB McCullum", "bowler": "P Kumar", "non_striker": "SC Ganguly",
+           "extras": {"wides": 1}, "runs": {"batter": 0, "extras": 1, "total": 1}},
+          {"actual_delivery": "0.3", "batter": "BB McCullum", "bowler": "P Kumar", "non_striker": "SC Ganguly",
+           "extras": {"byes": 2, "noballs": 1}, "runs": {"batter": 0, "extras": 3, "total": 3}}
+        ]}
+      ],
+      "powerplays": [{"from": 0.1, "to": 5.6, "type": "mandatory"}]
+    },
+    {
+      "team": "Royal Challengers Bangalore",
+      "overs": [
+        {"over": 0, "deliveries": [
+          {"batter": "R Dravid", "bowler": "AB Dinda", "non_striker": "W Jaffer",
+           "runs": {"batter": 0, "extras": 0, "total": 0},
+           "wickets": [{"kind": "caught", "player_out": "R Dravid", "fielders": [{"name": "RT Ponting"}]}],
+           "review": {"by": "Royal Challengers Bangalore", "umpire": "Asad Rauf", "batter": "R Dravid", "decision": "upheld"}}
+        ]}
+      ],
+      "target": {"overs": 20, "runs": 223}
+    }
+  ]
+}

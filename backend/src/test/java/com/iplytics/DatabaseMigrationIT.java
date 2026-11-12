@@ -35,6 +35,17 @@ class DatabaseMigrationIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void stagingAndIngestionAuditTablesExist() {
+        List<String> tables = jdbc.queryForList(
+                "select table_schema || '.' || table_name from information_schema.tables"
+                        + " where table_schema in ('staging', 'core') and table_type = 'BASE TABLE'",
+                String.class);
+        assertThat(tables).contains(
+                "core.ingestion_run", "staging.matches", "staging.deliveries", "staging.match_players",
+                "staging.rejected_row");
+    }
+
+    @Test
     void runsAgainstPostgres16() {
         assertThat(jdbc.queryForObject("show server_version", String.class)).startsWith("16");
     }

@@ -1,0 +1,9 @@
+match_id,inning,batting_team,bowling_team,over,ball,batter,bowler,non_striker,batsman_runs,extra_runs,total_runs,extras_type,is_wicket,player_dismissed,dismissal_kind,fielder
+335982,1,Kolkata Knight Riders,Royal Challengers Bangalore,0,1,SC Ganguly,P Kumar,BB McCullum,0,1,1,legbyes,0,NA,NA,NA
+335982,1,Kolkata Knight Riders,Royal Challengers Bangalore,0,2,BB McCullum,P Kumar,SC Ganguly,0,0,0,NA,0,NA,NA,NA
+335982,1,Kolkata Knight Riders,Royal Challengers Bangalore,0,3,BB McCullum,P Kumar,SC Ganguly,0,1,1,wides,0,NA,NA,NA
+335982,1,Kolkata Knight Riders,Royal Challengers Bangalore,0,4,BB McCullum,P Kumar,SC Ganguly,4,0,4,NA,0,NA,NA,NA
+335982,1,Kolkata Knight Riders,Royal Challengers Bangalore,0,5,BB McCullum,P Kumar,SC Ganguly,6,0,6,NA,0,NA,NA,NA
+335982,2,Royal Challengers Bangalore,Kolkata Knight Riders,0,1,R Dravid,AB Dinda,W Jaffer,0,0,0,NA,0,NA,NA,NA
+335982,2,Royal Challengers Bangalore,Kolkata Knight Riders,0,2,R Dravid,AB Dinda,W Jaffer,0,0,0,NA,1,R Dravid,caught,DJ Hussey
+335982,2,Royal Challengers Bangalore,Kolkata Knight Riders,0,3,JH Kallis,AB Dinda,W Jaffer,1,0,1,NA,0,NA,NA,NA

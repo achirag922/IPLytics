@@ -1,0 +1,19 @@
+# Profile for the one-shot ingestion CLI:
+#   java -jar iplytics.jar --spring.profiles.active=ingest --ingest.dir=data/raw
+spring:
+  main:
+    web-application-type: none # no HTTP server
+    banner-mode: off
+
+ingest:
+  dir: data/raw
+  max-rejected-rows: 1000
+  stale-run-timeout: 1h
+
+logging:
+  level:
+    root: WARN
+    com.iplytics: INFO
+    org.flywaydb.core.internal.command.DbMigrate: INFO
+  pattern:
+    console: "%d{HH:mm:ss.SSS} %-5level %msg%n"

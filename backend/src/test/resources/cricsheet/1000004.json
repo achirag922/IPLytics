@@ -1,0 +1,41 @@
+{
+  "meta": {"data_version": "1.1.0", "created": "2023-05-30", "revision": 1},
+  "info": {
+    "city": "Ahmedabad",
+    "dates": ["2023-05-28", "2023-05-29"],
+    "event": {"name": "Indian Premier League", "stage": "Final"},
+    "officials": {"umpires": ["Umpire E", "Umpire F"], "reserve_umpires": ["Umpire G"]},
+    "outcome": {"winner": "Chennai Super Kings", "by": {"wickets": 5}, "method": "D/L"},
+    "overs": 20,
+    "player_of_match": ["DP Conway"],
+    "players": {
+      "Gujarat Titans": ["Shubman Gill", "WP Saha"],
+      "Chennai Super Kings": ["RD Gaikwad", "DP Conway"]
+    },
+    "registry": {
+      "people": {"Shubman Gill": "id-gill", "WP Saha": "id-saha", "RD Gaikwad": "id-gaikwad", "DP Conway": "id-conway"}
+    },
+    "season": "2023",
+    "teams": ["Gujarat Titans", "Chennai Super Kings"],
+    "toss": {"decision": "field", "winner": "Chennai Super Kings"},
+    "venue": "Narendra Modi Stadium, Ahmedabad"
+  },
+  "innings": [
+    {
+      "team": "Gujarat Titans",
+      "overs": [{"over": 0, "deliveries": [
+        {"batter": "Shubman Gill", "bowler": "DP Conway", "non_striker": "WP Saha",
+         "runs": {"batter": 4, "extras": 0, "total": 4},
+         "replacements": {"match": [{"in": "Impact Sub", "out": "WP Saha", "reason": "impact_player", "team": "Gujarat Titans"}]}}
+      ]}]
+    },
+    {
+      "team": "Chennai Super Kings",
+      "overs": [{"over": 0, "deliveries": [
+        {"batter": "RD Gaikwad", "bowler": "Shubman Gill", "non_striker": "DP Conway",
+         "runs": {"batter": 1, "extras": 0, "total": 1}}
+      ]}],
+      "target": {"overs": 15, "runs": 171}
+    }
+  ]
+}

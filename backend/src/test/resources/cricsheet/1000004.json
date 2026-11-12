@@ -5,7 +5,7 @@
     "dates": ["2023-05-28", "2023-05-29"],
     "event": {"name": "Indian Premier League", "stage": "Final"},
     "officials": {"umpires": ["Umpire E", "Umpire F"], "reserve_umpires": ["Umpire G"]},
-    "outcome": {"winner": "Chennai Super Kings", "by": {"wickets": 5}, "method": "D/L"},
+    "outcome": {"winner": "Chennai Super Kings", "by": {"wickets": 10}, "method": "D/L"},
     "overs": 20,
     "player_of_match": ["DP Conway"],
     "players": {

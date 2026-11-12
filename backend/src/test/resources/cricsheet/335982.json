@@ -12,7 +12,7 @@
       "tv_umpires": ["AM Saheba"],
       "umpires": ["Asad Rauf", "RE Koertzen"]
     },
-    "outcome": {"winner": "Kolkata Knight Riders", "by": {"runs": 140}},
+    "outcome": {"winner": "Kolkata Knight Riders", "by": {"runs": 9}},
     "overs": 20,
     "player_of_match": ["BB McCullum"],
     "players": {
@@ -59,7 +59,7 @@
            "review": {"by": "Royal Challengers Bangalore", "umpire": "Asad Rauf", "batter": "R Dravid", "decision": "upheld"}}
         ]}
       ],
-      "target": {"overs": 20, "runs": 223}
+      "target": {"overs": 20, "runs": 10}
     }
   ]
 }

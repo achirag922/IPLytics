@@ -2,6 +2,7 @@ package com.iplytics;
 
 import com.iplytics.ingestion.IngestionRunner;
 import com.iplytics.ingestion.cricsheet.CricsheetConvertRunner;
+import com.iplytics.transform.TransformRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
@@ -13,7 +14,8 @@ public class IplyticsApplication {
 
     public static void main(String[] args) {
         ConfigurableApplicationContext context = SpringApplication.run(IplyticsApplication.class, args);
-        if (context.getEnvironment().matchesProfiles(IngestionRunner.PROFILE, CricsheetConvertRunner.PROFILE)) {
+        if (context.getEnvironment().matchesProfiles(
+                IngestionRunner.PROFILE, CricsheetConvertRunner.PROFILE, TransformRunner.PROFILE)) {
             // One-shot CLI: close the context and return the runner's exit code to the shell.
             System.exit(SpringApplication.exit(context));
         }

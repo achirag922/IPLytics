@@ -41,9 +41,9 @@
       "team": "Kings XI Punjab",
       "overs": [{"over": 0, "deliveries": [
         {"batter": "KL Rahul", "bowler": "K Rabada", "non_striker": "N Pooran",
-         "runs": {"batter": 2, "extras": 0, "total": 2}}
+         "runs": {"batter": 1, "extras": 0, "total": 1}}
       ]}],
-      "target": {"overs": 20, "runs": 158}
+      "target": {"overs": 20, "runs": 2}
     },
     {
       "team": "Kings XI Punjab",

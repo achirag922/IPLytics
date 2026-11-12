@@ -8,10 +8,10 @@ Change this file in the same pull request as any change to a calculation.
 
 | Rule | Decision |
 |---|---|
-| Super overs | Excluded from all player and team aggregates. Shown only in match detail. |
+| Super overs | Excluded from all player and team aggregates (`core.delivery.is_super_over`, i.e. innings 3+). Shown only in match detail. |
 | No-result / abandoned matches | Deliveries actually bowled **count** toward player stats. The match counts as "no result" for team records. |
 | DLS / reduced-overs matches | Included. The result stands as officially recorded. |
-| Season | The IPL edition year (a source label like `2007/08` maps to 2008). |
+| Season | The IPL edition year = calendar year of the match date (`core.season.year`). Cricsheet's label (`2007/08`, `2020/21`) is kept as `source_season` and never parsed. |
 | Franchise continuity | Team stats aggregate at franchise level (Delhi Daredevils + Delhi Capitals = one team). Deccan Chargers and Sunrisers Hyderabad are different franchises. See ADR 0003. |
 | Rounding | Ratios are computed from raw totals (never an average of averages) and rounded to 2 decimals, HALF_UP, only when displayed. |
 | Undefined ratios | Division by zero returns `null` (shown as "–"), never 0 or infinity. |
@@ -20,10 +20,10 @@ Change this file in the same pull request as any change to a calculation.
 
 | Term | Definition |
 |---|---|
-| Legal delivery | `extras_type` is not `wides` or `noballs`. Counts toward the over (6 per over). |
+| Legal delivery | `wides = 0 and noballs = 0` (stored as `core.delivery.is_legal_ball`). Counts toward the over (6 per over). |
 | Ball faced (batter) | Every delivery except a **wide**. No-balls, byes and leg-byes count as balls faced. |
-| Runs charged to bowler | `total_runs` minus extras of type `byes`, `legbyes` or `penalty`. Wides and no-ball runs **are** charged. |
-| Four / six | `batter_runs = 4` / `batter_runs = 6`. *Limitation:* the source cannot separate all-run fours from boundaries. |
+| Runs charged to bowler | `total_runs - byes - legbyes - penalty`. Wides and no-ball runs **are** charged. |
+| Four / six | `batter_runs = 4` / `batter_runs = 6` **and** `non_boundary = false` (a four that was run is not a boundary). |
 | Over number | Source data is 0-indexed (`over = 0` is the 1st over). Displays are 1-indexed. |
 
 ## 3. Phases
@@ -43,7 +43,7 @@ Change this file in the same pull request as any change to a calculation.
 | Innings | Distinct innings in which the player appeared as batter **or** non-striker. |
 | Runs | Σ `batter_runs` (extras never count). |
 | Balls faced | Count of balls faced (see §2). |
-| Dismissals | Times the player is `player_dismissed` with a kind other than `retired hurt` / `retired not out`. `retired out` **is** a dismissal. Includes run-outs at the non-striker's end. |
+| Dismissals | `core.wicket` rows where the player is `player_out_id` and `kind` is not `retired hurt` / `retired not out`. `retired out` **is** a dismissal. Includes run-outs at the non-striker's end. |
 | Not outs | Innings − dismissals. |
 | Average | Runs ÷ dismissals. `null` if dismissals = 0. |
 | Strike rate | Runs × 100 ÷ balls faced. |
@@ -61,7 +61,7 @@ Change this file in the same pull request as any change to a calculation.
 | Balls bowled | Count of legal deliveries. |
 | Overs | `balls / 6` "." `balls % 6` (e.g. 22 balls = `3.4`). Display only, never used in arithmetic. |
 | Runs conceded | Σ runs charged to bowler (see §2). |
-| Wickets | `dismissal_kind` ∈ {bowled, caught, caught and bowled, lbw, stumped, hit wicket}. Run out, retired, obstructing the field: **not** credited. |
+| Wickets | `core.wicket.kind` ∈ {bowled, caught, caught and bowled, lbw, stumped, hit wicket}. Run out, retired, obstructing the field: **not** credited. |
 | Economy | Runs conceded × 6 ÷ balls bowled. |
 | Average | Runs conceded ÷ wickets. `null` if wickets = 0. |
 | Strike rate | Balls bowled ÷ wickets. |
@@ -89,8 +89,10 @@ Change this file in the same pull request as any change to a calculation.
 | Bowling economy | 60 balls bowled (10 overs) |
 | Bowling average / strike rate | 5 wickets |
 
-## 8. Known data limitations (Kaggle-style source)
+## 8. Source rules and known limitations (Cricsheet, see docs/data-source.md)
 
-- Players who neither batted, bowled nor fielded in a match are missing from that match's appearances, so "matches played" can be understated.
-- Impact Player substitutions (2023+) are not identified.
-- A single `extras_type` per delivery: a no-ball that also produced byes is recorded only as `noballs`.
+- **Matches played** = rows in `core.match_player`: the full playing XI, plus the Impact Player from 2023, so 11–13 per team. This includes players who never batted, bowled or fielded.
+- **Catches and run-outs** come from `core.wicket_fielder`. Substitute fielders are flagged with `is_substitute`.
+- **Extras are exact per ball,** e.g. a no-ball plus byes.
+- **Matches abandoned without a ball bowled are absent from the source.** No-result matches with play are included.
+- **Impact Player substitutions are not modelled in core yet.** The source `replacements` are kept in `staging.deliveries.source_unmapped`.

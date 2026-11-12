@@ -24,6 +24,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Profile(IngestionRunner.PROFILE)
+@org.springframework.core.annotation.Order(10) // before TransformRunner when both profiles are active
 public class IngestionRunner implements ApplicationRunner, ExitCodeGenerator {
 
     public static final String PROFILE = "ingest";

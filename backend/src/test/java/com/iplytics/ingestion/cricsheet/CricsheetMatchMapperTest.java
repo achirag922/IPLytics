@@ -40,8 +40,8 @@ class CricsheetMatchMapperTest {
                 .containsEntry("toss_decision", "field")
                 .containsEntry("winner", "Kolkata Knight Riders")
                 .containsEntry("result", "runs")
-                .containsEntry("result_margin", "140")
-                .containsEntry("target_runs", "223")
+                .containsEntry("result_margin", "9")
+                .containsEntry("target_runs", "10")
                 .containsEntry("target_overs", "20")
                 .containsEntry("super_over", "N")
                 .containsEntry("scheduled_overs", "20")
@@ -167,7 +167,7 @@ class CricsheetMatchMapperTest {
                 .containsEntry("winner", "Delhi Capitals")
                 .containsEntry("super_over_winner", "Delhi Capitals")
                 .containsEntry("super_over", "Y")
-                .containsEntry("target_runs", "158") // the regular chase, not the super over
+                .containsEntry("target_runs", "2") // the regular chase, not the super over
                 .containsEntry("season", "2020/21").containsEntry("season_year", "2020");
         assertThat(m.match().get("result_margin")).isNull();
         assertThat(m.deliveries()).extracting(d -> d.get("inning") + ":" + d.get("is_super_over"))
@@ -214,7 +214,7 @@ class CricsheetMatchMapperTest {
         assertThat(m.match())
                 .containsEntry("date", "2023-05-28").containsEntry("end_date", "2023-05-29")
                 .containsEntry("match_type", "Final")
-                .containsEntry("result", "wickets").containsEntry("result_margin", "5")
+                .containsEntry("result", "wickets").containsEntry("result_margin", "10")
                 .containsEntry("reserve_umpires", "Umpire G");
         assertThat(m.match().get("match_number")).isNull();
         JsonNode replacement = JSON.readTree(m.deliveries().get(0).get("source_unmapped"));

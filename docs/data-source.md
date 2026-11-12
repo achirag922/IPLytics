@@ -1,7 +1,8 @@
 # IPL data source
 
-> **Status:** the real Cricsheet download (IPL 2008–2026) has been converted and loaded into staging with
-> 0 rejected files and 0 rejected rows. Section 7 records the actual counts from that run.
+> **Status:** the real Cricsheet download (IPL 2008–2026) has been converted, loaded into staging with
+> 0 rejected files and 0 rejected rows (section 7), and transformed into the normalized core schema with all
+> reconciliation checks passing (section 10).
 
 ## 1. Canonical source: Cricsheet
 
@@ -147,10 +148,8 @@ Verified in staging:
   - Missing required delivery fields are reported, and the row is still emitted so staging records it in `rejected_row`.
 - **The converter exits with code 1** when the report lists any problem. Review `cricsheet-conversion-report.json` before ingesting.
 - **Staging validation** (unchanged from V1.1): required values, numbers, dates, flags and JSON columns are checked per row. Invalid rows go to `staging.rejected_row`.
-- **Not resolved in staging (V1.2):**
-  - franchise renames (Delhi Daredevils → Delhi Capitals, Kings XI Punjab → Punjab Kings, Royal Challengers Bangalore → Royal Challengers Bengaluru)
-  - venue name variants
-  - checking that every `match_id` in deliveries and match_players exists in matches
+- **Resolved in core, not in staging:** franchise renames, venue name variants, player identity, and checking
+  that every `match_id` in deliveries and match_players exists in matches. See section 10.
 
 ## 9. Older Kaggle-style files
 
@@ -158,3 +157,108 @@ The original two-file Kaggle layout (`matches.csv` + `deliveries.csv` with `NA` 
 validates, because every Cricsheet-only column is optional. It is **not** the project's data source.
 `backend/src/test/resources/ingestion/sample/` (Kaggle-style) and `backend/src/test/resources/cricsheet/`
 (Cricsheet-style) contain **hand-written illustrative fixtures** for tests. They are not real data.
+The core transform (section 10) requires Cricsheet-derived staging data (player ids, extras breakdown, `wickets_json`).
+
+## 10. Staging → core transformation (V1.2)
+
+Run with `java -jar iplytics.jar --spring.profiles.active=transform`, or `ingest,transform` to do both. The design is in ADR 0010.
+
+**Input:** the latest COMPLETED ingestion run of each dataset. **Output:** the `core` tables below, all built in **one
+transaction** that either fully succeeds (status `COMPLETED` in `core.transform_run`) or changes nothing (`FAILED`, with the reasons).
+
+| Core table | Built from | Identity (natural key) |
+|---|---|---|
+| `season` | match dates + `staging.matches.season` | `year` |
+| `team`, `team_name_history` | reference `franchises.csv`, `team_names.csv` | `code`, `name` |
+| `venue`, `venue_alias` | reference `venues.csv` + source venue names | `(name, city)`, `alias` |
+| `player`, `player_alias` | every name/id pair in deliveries, wickets, playing lists, player of the match | `cricsheet_id` |
+| `match` | `staging.matches` | `source_match_id` (Cricsheet id) |
+| `innings` | distinct (match, inning) of `staging.deliveries` | `(match_id, innings_number)` |
+| `delivery` | `staging.deliveries` | `(innings_id, over_number, ball_in_over)` |
+| `wicket`, `wicket_fielder` | `staging.deliveries.wickets_json` (exact source) | `(delivery_id, wicket_number)`, `(wicket_id, fielder_number)` |
+| `match_player` | `staging.match_players` | `(match_id, player_id)` |
+
+**Rules**
+
+**Seasons**
+- `season.year` is the calendar year of the match date, so 2007/08 → **2008**, 2009/10 → 2010 and 2020/21 → **2020**.
+- `season.source_season` keeps Cricsheet's label.
+- Both are unique. A year with two labels, or a label spanning two years, fails validation.
+
+**Franchises** (reference: `backend/src/main/resources/reference/`)
+- `team` is the franchise and `team_name_history` holds every exact source name with its curated seasons.
+- Renamed teams share one franchise:
+  - Delhi Daredevils → Delhi Capitals (DC)
+  - Kings XI Punjab → Punjab Kings (PBKS)
+  - Royal Challengers Bangalore → Royal Challengers Bengaluru (RCB)
+  - Rising Pune Supergiants / Supergiant (RPS)
+- Deccan Chargers, Sunrisers Hyderabad, Pune Warriors, Kochi Tuskers Kerala, Gujarat Lions, Gujarat Titans and
+  Lucknow Super Giants stay separate franchises.
+- Matches keep the historical names (`team1_name`, `team2_name`) next to the franchise ids.
+- A team name missing from the reference data, or used outside its curated seasons, **fails** the transform.
+  No franchise is ever created implicitly.
+
+**Venues**
+- `venue` is the canonical ground and `venue_alias` holds every source spelling. The curated groupings follow Cricsheet's own venue ids:
+  - Feroz Shah Kotla → Arun Jaitley Stadium
+  - Sardar Patel Stadium, Motera → Narendra Modi Stadium
+  - PCA Stadium → PCA IS Bindra Stadium
+  - Subrata Roy Sahara → MCA Stadium Pune
+  - Chinnaswamy "Bangalore" / "Bengaluru" / `M.Chinnaswamy` → one venue
+- `match.venue_name` and `match.city` keep the source values.
+- **A venue name missing from the reference data is created as its own non-curated venue and reported** as a
+  warning, never merged. Add it to `venues.csv` to merge it.
+
+**Players**
+- Identity is the Cricsheet registry id. `display_name` is the name used in the player's most recent match, and
+  every name used is kept in `player_alias` with first and last season.
+- Nationality, batting hand and bowling style are **not** stored, because the source doesn't provide them.
+- A name that maps to two ids within one match fails validation.
+- Substitute fielders, who are not in the playing XI, are players too.
+
+**Deliveries**
+- These are kept as in the source:
+  - `over_number` (starts at 0) and `ball_in_over` (counts every delivery, including wides and no-balls)
+  - `actual_delivery`
+  - batter, bowler and non-striker player ids
+  - batter, extra and total runs, with the exact `wides`, `noballs`, `byes`, `legbyes` and `penalty`
+  - `non_boundary` and `is_super_over`
+- `is_legal_ball` is generated from wides and no-balls.
+- Constraints enforce `total = batter + extras` and `extras = wides + noballs + byes + legbyes + penalty`.
+- Every dismissal is a `wicket` row (several per ball allowed) with its fielders and substitute flags.
+
+**Playing lists**
+- `match_player` holds the full XI, plus the Impact Player from 2023, including players who never batted,
+  bowled or fielded.
+
+**Reconciliation** (inside the transaction; any failure rolls back)
+- **Counts:** matches, innings, deliveries, wickets, fielders, match players, seasons and players are equal in
+  staging and core.
+- **Checksums:** total, batter and each extra-type run total, non-boundaries, wickets and legal balls are equal,
+  and every innings total is equal.
+- **No duplicates or orphans:**
+  - no duplicate source match ids;
+  - no orphan innings, deliveries, players, teams, venues or seasons;
+  - no staging delivery or playing list without its match.
+- **Consistency:**
+  - innings and playing-list teams are the match teams, and the two regular innings have different batting teams;
+  - batters, non-strikers and bowlers are in the playing list;
+  - super-over and wicket flags agree;
+  - historical names belong to the franchise and season.
+- **Cricket arithmetic** (delivery totals → innings totals → match result):
+  - a non-D/L chase target = first-innings total + 1;
+  - a non-D/L win by runs = the side batting first, by the run difference;
+  - a win by wickets = the chasing side, by 10 − wickets lost (retired hurt / not out excluded);
+  - in a non-D/L tie, both totals are equal;
+  - a super-over match is a tie with a super-over winner.
+
+**Real run (2026-11-12)**
+- Core rows: 1,243 matches, 2,514 innings, 295,732 deliveries, 14,705 wickets, 11,266 wicket fielders, 27,909 match players.
+- Reference rows: 816 players, 15 franchises, 19 team names, 36 venues (44 aliases) and 19 seasons.
+- All **39/39 checks passed**. A rerun changed 0 rows. A full transform takes about 20 s.
+
+Warnings (not errors):
+- **Players under two names:** Arshad Khan / Arshad Khan (2), NA Saini / Navdeep Saini, S Arora / Salil Arora.
+- **One name, two players:** "Harmeet Singh" is two different players, kept apart by id.
+- **6 D/L matches won "by runs" by the side batting second** (ahead of par when play stopped).
+- **6 no-result matches without a second innings.**

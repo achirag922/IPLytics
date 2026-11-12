@@ -2,7 +2,7 @@
 
 A full-stack platform for exploring Indian Premier League data: team, player, match, venue and season analytics, head-to-heads, player comparisons and advanced batting and bowling analysis.
 
-> **Status: V1.1 (dataset and staging layer).** CSV files load into validated PostgreSQL staging tables through a CLI. Core domain tables, analytics and UI pages come next. See the [roadmap](#roadmap).
+> **Status: V1.2 (core data model).** Cricsheet IPL 2008–2026 data flows from source to staging to a normalized, reconciled `core` schema. Analytics views, APIs and UI pages come next. See the [roadmap](#roadmap).
 
 ## Tech stack
 
@@ -74,6 +74,14 @@ java -jar backend/target/iplytics-backend-0.0.1-SNAPSHOT.jar --spring.profiles.a
 ```
 
 Flyway migrates the schema before any file is read. The exit code is `0` when every file was loaded or skipped, and `1` when anything failed.
+
+6. **Transform staging into the core schema.** This resolves seasons, franchises, venues and players, loads matches, innings, deliveries, wickets and playing lists, then runs the reconciliation checks. It's all one transaction: it either fully succeeds or changes nothing. A rerun changes 0 rows.
+
+```bash
+java -jar backend/target/iplytics-backend-0.0.1-SNAPSHOT.jar --spring.profiles.active=transform
+```
+
+You can combine the last two steps with `--spring.profiles.active=ingest,transform`. Each run, with its checks, is recorded in `core.transform_run`. The rules are in [docs/data-source.md §10](docs/data-source.md) and [ADR 0010](docs/adr/0010-core-model-and-transformation.md).
 
 Expected output (shown here for the test fixtures; real counts come from your download):
 
@@ -153,6 +161,7 @@ docs/adr/           Architecture Decision Records
 |---|---|
 | **V0** ✅ | Foundation: build, migrations baseline, OpenAPI, tests, CI, docs, frontend shell |
 | **V1.1** ✅ | Dataset and staging layer: Cricsheet JSON → converter → CSV → validated staging tables, run audit, rejected rows |
-| V1.2+ | Core domain tables (staging → core), analytics views, REST APIs and UI pages; then head-to-head, comparisons, phase analytics, hardening |
+| **V1.2** ✅ | Core data model: seasons, franchises, venues, players (Cricsheet ids), matches, innings, deliveries, wickets, playing lists; idempotent set-based transform with reconciliation |
+| V1.3+ | Analytics views, REST APIs and UI pages; then head-to-head, comparisons, phase analytics, hardening |
 | V2 | Incremental ETL pipeline, data-quality reports |
 | V3+ | Redis, Kafka (live data), AI insights, predictions |

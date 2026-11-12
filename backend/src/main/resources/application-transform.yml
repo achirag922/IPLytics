@@ -1,0 +1,14 @@
+# Profile for the one-shot staging -> core transformation:
+#   java -jar iplytics.jar --spring.profiles.active=transform
+spring:
+  main:
+    web-application-type: none
+    banner-mode: off
+
+logging:
+  level:
+    root: WARN
+    com.iplytics: INFO
+    org.flywaydb.core.internal.command.DbMigrate: INFO
+  pattern:
+    console: "%d{HH:mm:ss.SSS} %-5level %msg%n"

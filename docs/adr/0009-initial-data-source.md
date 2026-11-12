@@ -1,6 +1,7 @@
 # 0009 Initial IPL data source
 
-**Status:** Proposed. To be confirmed at the start of V1.
+**Status:** Superseded in V1.1. The project uses the official Cricsheet IPL JSON download as its single source,
+converted in-house; see docs/data-source.md.
 
 ## Context
 V1 uses a CSV dataset. Two practical options:

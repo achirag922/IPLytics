@@ -44,7 +44,8 @@ public class ReferenceDataLoader {
     public static ReferenceData parse(Reader franchisesCsv, Reader teamNamesCsv, Reader venuesCsv) throws IOException {
         List<String> problems = new ArrayList<>();
         List<Franchise> franchises = records(franchisesCsv).stream()
-                .map(r -> new Franchise(r.get("code"), r.get("name"), Boolean.parseBoolean(r.get("active"))))
+                .map(r -> new Franchise(r.get("code"), r.get("name"), Boolean.parseBoolean(r.get("active")),
+                        r.isMapped("home_city") ? blankToNull(r.get("home_city")) : null))
                 .toList();
         List<TeamName> teamNames = new ArrayList<>();
         for (CSVRecord r : records(teamNamesCsv)) {

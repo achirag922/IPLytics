@@ -13,7 +13,7 @@ Change this file in the same pull request as any change to a calculation.
 | DLS / reduced-overs matches | Included. The result stands as officially recorded. |
 | Season | The IPL edition year = calendar year of the match date (`core.season.year`). Cricsheet's label (`2007/08`, `2020/21`) is kept as `source_season` and never parsed. |
 | Franchise continuity | Team stats aggregate at franchise level (Delhi Daredevils + Delhi Capitals = one team). Deccan Chargers and Sunrisers Hyderabad are different franchises. See ADR 0003. |
-| Rounding | Ratios are computed from raw totals (never an average of averages) and rounded to 2 decimals, HALF_UP, only when displayed. |
+| Rounding | Ratios are computed from raw totals (never an average of averages) and rounded to 2 decimals, HALF_UP. *V1.3 clarification:* the rounding is part of the single formula definition (SQL `analytics.*` functions = Java `CricketMetrics`), so displayed values and leaderboard ranking use the identical rounded number. Rounded ratios are never fed into further calculations. |
 | Undefined ratios | Division by zero returns `null` (shown as "–"), never 0 or infinity. |
 
 ## 2. Deliveries
@@ -36,11 +36,16 @@ Change this file in the same pull request as any change to a calculation.
 
 *Limitation:* fixed boundaries are used even when a DLS-shortened match had a shorter powerplay.
 
+Implemented as `analytics.phase(over_number, is_super_over)` and `CricketPhase.of`, which are identical. Super-over balls
+belong to no regular phase (`super_over`). Overs beyond 19 count as death overs. Shortened innings simply have fewer
+balls in the later phases.
+
 ## 4. Batting
 
 | Metric | Formula |
 |---|---|
-| Innings | Distinct innings in which the player appeared as batter **or** non-striker. |
+| Innings | Distinct innings in which the player appeared as batter **or** non-striker, or was dismissed. |
+| Batting position | Order of first appearance at the crease in the innings. On the same ball, the striker comes before the non-striker. |
 | Runs | Σ `batter_runs` (extras never count). |
 | Balls faced | Count of balls faced (see §2). |
 | Dismissals | `core.wicket` rows where the player is `player_out_id` and `kind` is not `retired hurt` / `retired not out`. `retired out` **is** a dismissal. Includes run-outs at the non-striker's end. |
@@ -66,7 +71,9 @@ Change this file in the same pull request as any change to a calculation.
 | Average | Runs conceded ÷ wickets. `null` if wickets = 0. |
 | Strike rate | Balls bowled ÷ wickets. |
 | Dot balls | Legal deliveries with 0 runs charged to the bowler. |
-| Maiden | A complete over (6 legal balls, single bowler) with 0 runs charged. |
+| Maiden | A complete over (6 legal balls, single bowler) with 0 runs charged. *Not implemented yet.* |
+| Wides / no-balls | Number of wide / no-ball **deliveries**. The extras runs are reported separately as `wide_runs` / `no_ball_runs`. |
+| Boundaries conceded | Fours / sixes off the bat that are not `non_boundary`. |
 | 3W / 4W / 5W | Innings with exactly 3 / exactly 4 / 5 or more wickets. |
 | Best figures | Most wickets in an innings; ties broken by fewest runs conceded. |
 
@@ -78,7 +85,20 @@ Change this file in the same pull request as any change to a calculation.
 | Win % | Wins × 100 ÷ (played − no results). |
 | Batting first | The batting team of innings 1. |
 | Toss win → match win % | Matches where the toss winner also won × 100 ÷ matches with a result. |
-| Net run rate | (Runs scored ÷ overs faced) − (runs conceded ÷ overs bowled). Overs are real (balls ÷ 6). A side bowled out is charged its full quota of overs (20, or the revised DLS quota). Super overs are excluded. |
+| Net run rate | (Runs scored ÷ overs faced) − (runs conceded ÷ overs bowled). Overs are real (balls ÷ 6). A side bowled out is charged its full quota of overs (20, or the revised DLS quota). Super overs are excluded. *Not implemented yet.* |
+| Batted first / chased | Batted in innings 1 / innings 2 of the match. |
+| Average score / conceded | Runs scored (conceded) in regular innings ÷ number of those innings. |
+| Home / away | Home when the venue's city equals the franchise's curated home city; everything else is away. Approximate for second home grounds, relocations and neutral seasons (docs/analytics.md §7). |
+
+## 6a. Venue
+
+| Metric | Formula |
+|---|---|
+| Decisive matches | Results by runs or wickets (ties and no-results excluded). |
+| Batting-first win % / chase success % | Decisive matches won by the side batting first / second × 100 ÷ decisive matches. |
+| Average first-innings score | Mean first-innings total over matches with a result and no D/L adjustment. |
+| Highest total / lowest completed total | Max regular-innings total / min total of an innings that was all out or used its full scheduled overs. |
+| Average run rate | All regular-innings runs × 6 ÷ legal balls at the venue. |
 
 ## 7. Leaderboard qualification (defaults, overridable via API parameters)
 

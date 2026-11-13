@@ -11,7 +11,8 @@ import java.util.List;
  */
 public record ReferenceData(List<Franchise> franchises, List<TeamName> teamNames, List<VenueAlias> venueAliases) {
 
-    public record Franchise(String code, String name, boolean active) {
+    /** @param homeCity primary home city (curated; matched against venue city for home/away splits) */
+    public record Franchise(String code, String name, boolean active, String homeCity) {
     }
 
     /** @param lastSeason null while the name is still in use */

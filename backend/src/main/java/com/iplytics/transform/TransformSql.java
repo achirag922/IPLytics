@@ -184,7 +184,9 @@ final class TransformSql {
     // ---- reference data (loaded by Java into these tables) ---------------------------------------------------
 
     static final List<String> CREATE_REFERENCE = List.of(
-            "create temp table t_ref_team (code text primary key, name text not null, is_active boolean not null) on commit drop",
+            """
+            create temp table t_ref_team (code text primary key, name text not null, is_active boolean not null,
+                home_city text) on commit drop""",
             """
             create temp table t_ref_team_name (name text primary key, code text not null,
                 first_season smallint not null, last_season smallint) on commit drop""",
@@ -240,13 +242,13 @@ final class TransformSql {
             "select distinct season_year, source_season from t_match",
             "(year)", List.of("source_season"));
 
-    static final String UPSERT_TEAMS = upsert("core.team", List.of("code", "name", "is_active"),
+    static final String UPSERT_TEAMS = upsert("core.team", List.of("code", "name", "is_active", "home_city"),
             """
-            select distinct t.code, t.name, t.is_active
+            select distinct t.code, t.name, t.is_active, t.home_city
               from t_ref_team t
               join t_ref_team_name n on n.code = t.code
               join t_team_usage u on u.name = n.name""",
-            "(code)", List.of("name", "is_active"));
+            "(code)", List.of("name", "is_active", "home_city"));
 
     static final String UPSERT_TEAM_NAMES = upsert("core.team_name_history",
             List.of("team_id", "name", "first_season", "last_season"),

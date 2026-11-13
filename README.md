@@ -2,7 +2,7 @@
 
 A full-stack platform for exploring Indian Premier League data: team, player, match, venue and season analytics, head-to-heads, player comparisons and advanced batting and bowling analysis.
 
-> **Status: V1.2 (core data model).** Cricsheet IPL 2008–2026 data flows from source to staging to a normalized, reconciled `core` schema. Analytics views, APIs and UI pages come next. See the [roadmap](#roadmap).
+> **Status: V1.3 (analytics layer).** Cricsheet IPL 2008–2026 data flows from source to staging, into a normalized `core` schema, and on to a reconciled `analytics` layer with reusable query classes. REST APIs and UI pages come next. See the [roadmap](#roadmap).
 
 ## Tech stack
 
@@ -81,7 +81,15 @@ Flyway migrates the schema before any file is read. The exit code is `0` when ev
 java -jar backend/target/iplytics-backend-0.0.1-SNAPSHOT.jar --spring.profiles.active=transform
 ```
 
-You can combine the last two steps with `--spring.profiles.active=ingest,transform`. Each run, with its checks, is recorded in `core.transform_run`. The rules are in [docs/data-source.md §10](docs/data-source.md) and [ADR 0010](docs/adr/0010-core-model-and-transformation.md).
+7. **Refresh the analytics layer.** This refreshes the materialized views concurrently, then reconciles them against core. If any check fails it rolls back, leaving the previous analytics in place.
+
+```bash
+java -jar backend/target/iplytics-backend-0.0.1-SNAPSHOT.jar --spring.profiles.active=analytics
+```
+
+You can run steps 5–7 together with `--spring.profiles.active=ingest,transform,analytics`. See [docs/analytics.md](docs/analytics.md).
+
+You can also combine just the ingest and transform steps with `--spring.profiles.active=ingest,transform`. Each run, with its checks, is recorded in `core.transform_run`. The rules are in [docs/data-source.md §10](docs/data-source.md) and [ADR 0010](docs/adr/0010-core-model-and-transformation.md).
 
 Expected output (shown here for the test fixtures; real counts come from your download):
 
@@ -153,6 +161,7 @@ docs/adr/           Architecture Decision Records
 
 - [Data source and expected CSV format](docs/data-source.md)
 - [Metric definitions](docs/metrics.md)
+- [Analytics layer](docs/analytics.md)
 - [Architecture decisions](docs/adr/README.md)
 
 ## Roadmap
@@ -162,6 +171,7 @@ docs/adr/           Architecture Decision Records
 | **V0** ✅ | Foundation: build, migrations baseline, OpenAPI, tests, CI, docs, frontend shell |
 | **V1.1** ✅ | Dataset and staging layer: Cricsheet JSON → converter → CSV → validated staging tables, run audit, rejected rows |
 | **V1.2** ✅ | Core data model: seasons, franchises, venues, players (Cricsheet ids), matches, innings, deliveries, wickets, playing lists; idempotent set-based transform with reconciliation |
-| V1.3+ | Analytics views, REST APIs and UI pages; then head-to-head, comparisons, phase analytics, hardening |
+| **V1.3** ✅ | Analytics layer: batting/bowling/innings/team-match views, formula functions mirrored by CricketMetrics, phases, concurrent audited refresh, team/player/venue/head-to-head/leaderboard queries |
+| V1.4+ | REST APIs and UI pages; then hardening |
 | V2 | Incremental ETL pipeline, data-quality reports |
 | V3+ | Redis, Kafka (live data), AI insights, predictions |

@@ -15,5 +15,6 @@ ADRs are immutable once **Accepted**. To change one, add a new ADR that supersed
 | [0008](0008-api-conventions.md) | REST API conventions | Accepted |
 | [0009](0009-initial-data-source.md) | Initial IPL data source | Superseded: Cricsheet JSON is the source (see docs/data-source.md) |
 | [0010](0010-core-model-and-transformation.md) | Core model and staging → core transformation | Accepted |
+| [0011](0011-analytics-layer.md) | Analytics layer: views, formula functions, refresh | Accepted |
 
 Template: copy any ADR and keep the headings **Status / Context / Decision / Consequences**.

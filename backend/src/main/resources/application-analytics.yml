@@ -1,0 +1,14 @@
+# Profile for the one-shot analytics refresh (run after the transform):
+#   java -jar iplytics.jar --spring.profiles.active=analytics
+spring:
+  main:
+    web-application-type: none
+    banner-mode: off
+
+logging:
+  level:
+    root: WARN
+    com.iplytics: INFO
+    org.flywaydb.core.internal.command.DbMigrate: INFO
+  pattern:
+    console: "%d{HH:mm:ss.SSS} %-5level %msg%n"

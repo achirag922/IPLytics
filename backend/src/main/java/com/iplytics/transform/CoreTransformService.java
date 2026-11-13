@@ -160,10 +160,11 @@ public class CoreTransformService {
         TransformSql.STAGE_DERIVED.forEach(jdbc::execute);
 
         TransformSql.CREATE_REFERENCE.forEach(jdbc::execute);
-        jdbc.batchUpdate("insert into t_ref_team values (?, ?, ?)", reference.franchises(), 100, (ps, f) -> {
+        jdbc.batchUpdate("insert into t_ref_team values (?, ?, ?, ?)", reference.franchises(), 100, (ps, f) -> {
             ps.setString(1, f.code());
             ps.setString(2, f.name());
             ps.setBoolean(3, f.active());
+            ps.setString(4, f.homeCity());
         });
         jdbc.batchUpdate("insert into t_ref_team_name values (?, ?, ?, ?)", reference.teamNames(), 100, (ps, n) -> {
             ps.setString(1, n.name());

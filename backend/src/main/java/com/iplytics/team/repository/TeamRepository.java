@@ -47,6 +47,6 @@ public class TeamRepository {
         return jdbc.query(sql, params, (rs, n) -> new TeamDto(rs.getInt("id"), rs.getString("code"),
                 rs.getString("name"), rs.getBoolean("is_active"), rs.getString("home_city"),
                 (Integer) rs.getObject("first_season"), (Integer) rs.getObject("last_season"), rs.getLong("matches"),
-                names.getOrDefault(rs.getInt("id"), List.of())));
+                names.getOrDefault(rs.getInt("id"), List.of()), null, null));
     }
 }

@@ -4,6 +4,7 @@ import com.iplytics.common.metrics.CricketMetrics;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -33,7 +34,8 @@ public class TeamQueries {
             coalesce(sum(t.runs_for), 0) as runs_for, count(t.runs_for) as innings_batted,
             coalesce(sum(t.balls_faced), 0) as balls_faced,
             coalesce(sum(t.runs_against), 0) as runs_against, count(t.runs_against) as innings_bowled,
-            coalesce(sum(t.balls_bowled), 0) as balls_bowled""";
+            coalesce(sum(t.balls_bowled), 0) as balls_bowled,
+            max(t.runs_for) as highest_score""";
 
     private final NamedParameterJdbcTemplate jdbc;
 
@@ -55,6 +57,46 @@ public class TeamQueries {
         return jdbc.query(sql, params, (rs, n) -> new SeasonTeamStats(rs.getInt("season_year"), map(rs)));
     }
 
+    /** Records of the franchise per venue (key = venue id), most matches first. */
+    public List<Grouped> byVenue(int teamId, AnalyticsFilter filter) {
+        return grouped("t.venue_id", teamId, filter);
+    }
+
+    /** Records of the franchise per opponent (key = opponent team id), most matches first. */
+    public List<Grouped> byOpponent(int teamId, AnalyticsFilter filter) {
+        return grouped("t.opponent_team_id", teamId, filter);
+    }
+
+    /** All-time records of every franchise in one grouped query (key = team id). */
+    public Map<Integer, TeamStats> allTeams() {
+        Map<Integer, TeamStats> result = new LinkedHashMap<>();
+        jdbc.query("select t.team_id, " + AGGREGATES + " from analytics.team_match_result t group by t.team_id",
+                new MapSqlParameterSource(), rs -> {
+                    result.put(rs.getInt("team_id"), map(rs));
+                });
+        return result;
+    }
+
+    /** Each franchise's record in the last season it played (key = team id). */
+    public Map<Integer, SeasonTeamStats> latestSeasons() {
+        Map<Integer, SeasonTeamStats> result = new LinkedHashMap<>();
+        jdbc.query("select t.team_id, t.season_year, " + AGGREGATES + " from analytics.team_match_result t"
+                + " where t.season_year = (select max(x.season_year) from analytics.team_match_result x"
+                + " where x.team_id = t.team_id) group by t.team_id, t.season_year", new MapSqlParameterSource(),
+                rs -> {
+                    result.put(rs.getInt("team_id"), new SeasonTeamStats(rs.getInt("season_year"), map(rs)));
+                });
+        return result;
+    }
+
+    private List<Grouped> grouped(String column, int teamId, AnalyticsFilter filter) {
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        String sql = "select " + column + " as group_key, " + AGGREGATES + " from analytics.team_match_result t where true"
+                + filter.team(teamId).conditions("t", false, params) + " group by " + column
+                + " order by count(*) desc, " + column;
+        return jdbc.query(sql, params, (rs, n) -> new Grouped(rs.getInt("group_key"), map(rs)));
+    }
+
     static TeamStats map(ResultSet rs) throws SQLException {
         long runsFor = rs.getLong("runs_for");
         long runsAgainst = rs.getLong("runs_against");
@@ -63,7 +105,7 @@ public class TeamQueries {
                 CricketMetrics.mean(runsFor, rs.getLong("innings_batted")), runsAgainst, rs.getLong("innings_bowled"),
                 CricketMetrics.mean(runsAgainst, rs.getLong("innings_bowled")),
                 CricketMetrics.runRate(runsFor, rs.getLong("balls_faced")),
-                CricketMetrics.runRate(runsAgainst, rs.getLong("balls_bowled")));
+                CricketMetrics.runRate(runsAgainst, rs.getLong("balls_bowled")), (Integer) rs.getObject("highest_score"));
     }
 
     private static Record record(ResultSet rs, String prefix) throws SQLException {
@@ -85,7 +127,11 @@ public class TeamQueries {
     public record TeamStats(Record overall, Record battingFirst, Record chasing, Record home, Record away,
                             long runsFor, long inningsBatted, BigDecimal averageScore, long runsAgainst,
                             long inningsBowled, BigDecimal averageConceded, BigDecimal runRate,
-                            BigDecimal opponentRunRate) {
+                            BigDecimal opponentRunRate, Integer highestScore) {
+    }
+
+    /** @param key venue id or opponent team id */
+    public record Grouped(int key, TeamStats stats) {
     }
 
     public record SeasonTeamStats(int seasonYear, TeamStats stats) {

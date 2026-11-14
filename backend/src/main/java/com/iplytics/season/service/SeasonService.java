@@ -10,7 +10,9 @@ import com.iplytics.analytics.query.SeasonQueries;
 import com.iplytics.common.exception.ResourceNotFoundException;
 import com.iplytics.common.metrics.CricketMetrics;
 import com.iplytics.common.web.RefLookup;
+import com.iplytics.common.web.Refs.PlayerRef;
 import com.iplytics.common.web.Refs.TeamRef;
+import com.iplytics.season.api.SeasonDtos.IndividualScoreDto;
 import com.iplytics.season.api.SeasonDtos.PointsTableDto;
 import com.iplytics.season.api.SeasonDtos.PointsTableRowDto;
 import com.iplytics.season.api.SeasonDtos.SeasonDto;
@@ -29,6 +31,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class SeasonService {
 
+    private static final SeasonQueries.SeasonTotals EMPTY = new SeasonQueries.SeasonTotals(0, 0, 0, 0, 0, 0, null, null);
+
     private final SeasonRepository seasons;
     private final SeasonQueries seasonQueries;
     private final LeaderboardService leaderboards;
@@ -44,7 +48,8 @@ public class SeasonService {
 
     public List<SeasonDto> list() {
         Map<Integer, TeamRef> teams = refs.teams();
-        return seasons.findAll().stream().map(s -> toDto(s, teams)).toList();
+        Map<Integer, SeasonQueries.SeasonTotals> totals = seasonQueries.totalsBySeason();
+        return seasons.findAll().stream().map(s -> toDto(s, teams, totals.get(s.year()))).toList();
     }
 
     public SeasonSummaryDto summary(int year, int minimumBalls, int minimumOvers) {
@@ -56,6 +61,7 @@ public class SeasonService {
                 totals.fours(), totals.sixes(), totals.averageScore(), totals.runRate(),
                 seasonQueries.highestTeamScore(year).map(s -> score(s, teams)).orElse(null),
                 seasonQueries.lowestCompletedTeamScore(year).map(s -> score(s, teams)).orElse(null),
+                seasonQueries.highestIndividualScore(year).map(s -> individual(s, teams)).orElse(null),
                 season.championId() == null ? null : teams.get(season.championId()),
                 batting(leaderboards.batting(BattingLeaderboardMetric.RUNS, filter, null, 1)),
                 bowling(leaderboards.bowling(BowlingLeaderboardMetric.WICKETS, filter, null, 1)),
@@ -93,9 +99,17 @@ public class SeasonService {
         return seasons.find(year).orElseThrow(() -> ResourceNotFoundException.of("Season", year));
     }
 
-    private static SeasonDto toDto(SeasonRow s, Map<Integer, TeamRef> teams) {
+    private static SeasonDto toDto(SeasonRow s, Map<Integer, TeamRef> teams, SeasonQueries.SeasonTotals totals) {
+        SeasonQueries.SeasonTotals t = totals == null ? EMPTY : totals;
         return new SeasonDto(s.year(), s.name(), s.sourceSeason(), s.matches(),
-                s.championId() == null ? null : teams.get(s.championId()));
+                s.championId() == null ? null : teams.get(s.championId()), t.runs(), t.wickets(), t.fours(), t.sixes(),
+                t.averageScore(), t.runRate());
+    }
+
+    private IndividualScoreDto individual(SeasonQueries.IndividualScore s, Map<Integer, TeamRef> teams) {
+        PlayerRef player = refs.players(List.of(s.playerId())).get(s.playerId());
+        return new IndividualScoreDto(player, teams.get(s.teamId()), teams.get(s.opponentId()), s.runs(), s.balls(),
+                s.notOut(), s.matchId(), s.date());
     }
 
     private static TeamScoreDto score(SeasonQueries.TeamScore s, Map<Integer, TeamRef> teams) {

@@ -2,7 +2,9 @@ import { render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { EChart } from './EChart';
 
-// jsdom has no canvas, so the ECharts instance is replaced with a fake.
+// The real wrapper is tested here (the global setup replaces it elsewhere); jsdom has no canvas, so the ECharts
+// instance is replaced with a fake.
+vi.unmock('./EChart');
 const fakeChart = vi.hoisted(() => ({ setOption: vi.fn(), resize: vi.fn(), dispose: vi.fn() }));
 vi.mock('./echarts', () => ({ echarts: { init: vi.fn(() => fakeChart) } }));
 

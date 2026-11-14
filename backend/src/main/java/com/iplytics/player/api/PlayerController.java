@@ -9,7 +9,8 @@ import com.iplytics.player.api.PlayerDtos.PlayerBattingDto;
 import com.iplytics.player.api.PlayerDtos.PlayerBowlingDto;
 import com.iplytics.player.api.PlayerDtos.PlayerDetailDto;
 import com.iplytics.player.api.PlayerDtos.PlayerPhasesDto;
-import com.iplytics.player.api.PlayerDtos.PlayerSummaryDto;
+import com.iplytics.analytics.comparison.Discipline;
+import com.iplytics.player.api.PlayerDtos.PlayerListItemDto;
 import com.iplytics.player.api.PlayerDtos.PlayerVenuesDto;
 import com.iplytics.player.api.PlayerDtos.PlayerVsTeamsDto;
 import com.iplytics.player.service.PlayerService;
@@ -21,6 +22,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.springdoc.core.annotations.ParameterObject;
@@ -44,14 +46,29 @@ public class PlayerController {
     }
 
     @GetMapping
-    @Operation(summary = "Search players", description = "Case-insensitive match on the display name or any name the player has used.")
-    public ApiResponse<List<PlayerSummaryDto>> list(
+    @Operation(summary = "Players", description = """
+            Paged players who played in the scope (season range, franchise), with matches, runs, batting average,
+            strike rate, wickets and economy within it. search matches the display name or any name the player has
+            used (case-insensitive). discipline keeps only players who batted (bowled) in scope. Unknown team is 422.""")
+    public ApiResponse<List<PlayerListItemDto>> list(
             @Parameter(description = "Part of a player name") @RequestParam(required = false) @Size(max = 60) String search,
+            @ParameterObject @Valid PlayerListParams scope,
+            @Parameter(description = "Only players who batted (batting) or bowled (bowling) in scope")
+            @RequestParam(required = false) Discipline discipline,
+            @Parameter(description = "Order: name (default), matches, runs or wickets (descending)")
+            @RequestParam(defaultValue = "name") PlayerSort sort,
             @Parameter(description = "Zero-based page") @RequestParam(defaultValue = "0") @Min(0) int page,
             @Parameter(description = "Page size (max 100)") @RequestParam(defaultValue = "20") @Min(1) @Max(Pagination.MAX_SIZE) int size) {
-        PageSlice<PlayerSummaryDto> slice = service.search(search, page, size);
+        PageSlice<PlayerListItemDto> slice = service.list(search, scope, discipline, sort, page, size);
+        Map<String, Object> filters = new LinkedHashMap<>(scope.describe());
+        if (search != null) {
+            filters.put("search", search);
+        }
+        if (discipline != null) {
+            filters.put("discipline", discipline.apiName());
+        }
         return ApiResponse.page(slice.items(), Pagination.of(page, size, slice.total()),
-                meta.meta(search == null ? Map.of() : Map.of("search", search)));
+                meta.meta(filters, Map.of("sort", sort.apiName())));
     }
 
     @GetMapping("/{id}")

@@ -14,6 +14,17 @@ public final class PlayerDtos {
     private PlayerDtos() {
     }
 
+    @Schema(description = """
+            A player with figures inside the requested scope (seasons, franchise; super overs excluded). team is the
+            franchise of the player's latest match in scope. battingAverage = runs / dismissals; strikeRate = 100 x
+            runs / balls faced; economy = 6 x runs conceded / legal balls; ratios are null without a denominator.""")
+    public record PlayerListItemDto(@Schema(example = "412") int id, @Schema(example = "V Kohli") String name,
+                                    @Schema(description = "Cricsheet registry id") String sourceId, TeamRef team,
+                                    long matches, Integer firstSeason, Integer lastSeason, long battingInnings,
+                                    long runs, BigDecimal battingAverage, BigDecimal strikeRate, long bowlingInnings,
+                                    long wickets, BigDecimal economy) {
+    }
+
     public record PlayerSummaryDto(@Schema(example = "412") int id, @Schema(example = "V Kohli") String name,
                                    @Schema(description = "Cricsheet registry id", example = "ba607b88") String sourceId,
                                    @Schema(description = "Matches in a playing XI") long matches,
@@ -66,7 +77,9 @@ public final class PlayerDtos {
 
     public record PhaseBattingDto(@Schema(allowableValues = {"powerplay", "middle", "death"}) String phase,
                                   long runs, long balls, BigDecimal strikeRate,
-                                  @Schema(description = "Share of the player's runs in this phase, %") BigDecimal runShare) {
+                                  @Schema(description = "Share of the player's runs in this phase, %") BigDecimal runShare,
+                                  long fours, long sixes,
+                                  @Schema(description = "Fours and sixes per 100 balls faced in the phase") BigDecimal boundaryPercentage) {
     }
 
     public record PhaseBowlingDto(@Schema(allowableValues = {"powerplay", "middle", "death"}) String phase,

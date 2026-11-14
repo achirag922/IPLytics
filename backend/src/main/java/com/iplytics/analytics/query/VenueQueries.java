@@ -2,7 +2,11 @@ package com.iplytics.analytics.query;
 
 import com.iplytics.common.metrics.CricketMetrics;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -50,6 +54,53 @@ public class VenueQueries {
         MapSqlParameterSource params = new MapSqlParameterSource("venueId", venueId);
         Map<String, Object> matches = jdbc.queryForMap(MATCH_LEVEL + seasons("s.year", filter, params), params);
         Map<String, Object> innings = jdbc.queryForMap(INNINGS_LEVEL + seasons("i.season_year", filter, params), params);
+        return build(matches, innings);
+    }
+
+    /** {@link #summary} per season, in season order: two grouped queries. */
+    public List<SeasonVenueStats> bySeason(int venueId, AnalyticsFilter filter) {
+        MapSqlParameterSource params = new MapSqlParameterSource("venueId", venueId);
+        Map<Integer, Map<String, Object>> matches = bySeasonKey(jdbc.queryForList(
+                MATCH_LEVEL.replaceFirst("select ", "select s.year as season_year, ")
+                        + seasons("s.year", filter, params) + " group by s.year", params));
+        Map<Integer, Map<String, Object>> innings = bySeasonKey(jdbc.queryForList(
+                INNINGS_LEVEL.replaceFirst("select ", "select i.season_year, ")
+                        + seasons("i.season_year", filter, params) + " group by i.season_year", params));
+        return matches.entrySet().stream().map(e -> new SeasonVenueStats(e.getKey(),
+                build(e.getValue(), innings.getOrDefault(e.getKey(), Map.of())))).toList();
+    }
+
+    /**
+     * First-innings totals in 20-run bands (under 120, 120-139, ..., 220 and over), over matches with a result and
+     * no D/L adjustment. Every band is returned, empty ones with 0.
+     */
+    public List<ScoreBand> scoreDistribution(int venueId, AnalyticsFilter filter) {
+        MapSqlParameterSource params = new MapSqlParameterSource("venueId", venueId);
+        Map<Integer, Long> counts = new HashMap<>();
+        jdbc.query("""
+                select width_bucket(i.total_runs, 120, 220, 5) as band, count(*) as innings
+                  from analytics.innings_summary i join core.match m on m.id = i.match_id
+                 where i.venue_id = :venueId and i.innings_number = 1 and not i.is_super_over
+                   and m.result <> 'no result' and m.method is null""" + seasons("i.season_year", filter, params)
+                + " group by 1", params, rs -> {
+                    counts.put(rs.getInt("band"), rs.getLong("innings"));
+                });
+        List<ScoreBand> bands = new ArrayList<>();
+        for (int band = 0; band <= 6; band++) {
+            Integer from = band == 0 ? null : 120 + 20 * (band - 1);
+            Integer to = band == 6 ? null : 119 + 20 * band;
+            bands.add(new ScoreBand(from, to, counts.getOrDefault(band, 0L)));
+        }
+        return bands;
+    }
+
+    private static Map<Integer, Map<String, Object>> bySeasonKey(List<Map<String, Object>> rows) {
+        Map<Integer, Map<String, Object>> result = new TreeMap<>();
+        rows.forEach(row -> result.put(((Number) row.get("season_year")).intValue(), row));
+        return result;
+    }
+
+    private static VenueStats build(Map<String, Object> matches, Map<String, Object> innings) {
         long decisive = number(matches, "decisive");
         long battingFirstWins = number(matches, "batting_first_wins");
         long chasingWins = number(matches, "chasing_wins");
@@ -95,5 +146,12 @@ public class VenueQueries {
                              BigDecimal averageFirstInningsScore, Integer highestTotal, Integer lowestCompletedTotal,
                              long runs, long legalBalls, BigDecimal averageRunRate, long innings,
                              BigDecimal wicketsPerInnings, BigDecimal boundariesPerInnings) {
+    }
+
+    public record SeasonVenueStats(int seasonYear, VenueStats stats) {
+    }
+
+    /** @param from lowest total in the band (null: no lower bound) @param to highest (null: no upper bound) */
+    public record ScoreBand(Integer from, Integer to, long innings) {
     }
 }

@@ -3,7 +3,9 @@ package com.iplytics.venue.api;
 import com.iplytics.common.web.ApiMetaFactory;
 import com.iplytics.common.web.ApiResponse;
 import com.iplytics.common.web.SeasonFilterParams;
+import com.iplytics.venue.api.VenueDtos.ScoreBandDto;
 import com.iplytics.venue.api.VenueDtos.VenueDto;
+import com.iplytics.venue.api.VenueDtos.VenueSeasonStatsDto;
 import com.iplytics.venue.api.VenueDtos.VenueStatsDto;
 import com.iplytics.venue.service.VenueService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -48,5 +50,21 @@ public class VenueController {
             win percentages, average run rate, wickets and boundaries per innings.""")
     public ApiResponse<VenueStatsDto> stats(@PathVariable @Positive int id, @ParameterObject @Valid SeasonFilterParams filter) {
         return ApiResponse.of(service.stats(id, filter), meta.meta(filter.describe()));
+    }
+
+    @GetMapping("/{id}/seasons")
+    @Operation(summary = "Venue characteristics per season", description = "The same figures as /stats for each season played at the venue.")
+    public ApiResponse<List<VenueSeasonStatsDto>> seasons(@PathVariable @Positive int id,
+                                                          @ParameterObject @Valid SeasonFilterParams filter) {
+        return ApiResponse.list(service.seasons(id, filter), meta.meta(filter.describe()));
+    }
+
+    @GetMapping("/{id}/score-distribution")
+    @Operation(summary = "First-innings score distribution", description = """
+            First-innings totals in 20-run bands (under 120, 120-139, ..., 220 and over) over matches with a result
+            and no D/L adjustment. Every band is returned.""")
+    public ApiResponse<List<ScoreBandDto>> scoreDistribution(@PathVariable @Positive int id,
+                                                             @ParameterObject @Valid SeasonFilterParams filter) {
+        return ApiResponse.list(service.scoreDistribution(id, filter), meta.meta(filter.describe()));
     }
 }

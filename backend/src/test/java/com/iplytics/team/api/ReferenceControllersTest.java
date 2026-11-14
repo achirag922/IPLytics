@@ -35,8 +35,8 @@ class ReferenceControllersTest extends ApiControllerTest {
     @Test
     void unpaginatedListsAreOneFullPage() throws Exception {
         when(teams.list()).thenReturn(List.of(
-                new TeamDto(1, "CSK", "Chennai Super Kings", true, "Chennai", 2008, 2026, 250, List.of()),
-                new TeamDto(2, "MI", "Mumbai Indians", true, "Mumbai", 2008, 2026, 270, List.of())));
+                new TeamDto(1, "CSK", "Chennai Super Kings", true, "Chennai", 2008, 2026, 250, List.of(), null, null),
+                new TeamDto(2, "MI", "Mumbai Indians", true, "Mumbai", 2008, 2026, 270, List.of(), null, null)));
 
         mvc.perform(get("/api/v1/teams"))
                 .andExpect(status().isOk())

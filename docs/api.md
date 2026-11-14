@@ -11,33 +11,38 @@ comes from the V1.3 views, SQL formula functions or `CricketMetrics` (docs/metri
 
 | Endpoint | Returns | Paged |
 |---|---|---|
-| `GET /seasons` | Seasons with match count and champion | single page |
-| `GET /seasons/{year}/summary` | Matches, runs, wickets, average score, highest / lowest completed team score, champion, top run scorer, top wicket taker, best strike rate (`minimumBalls`, default 100), best economy (`minimumOvers`, default 10) | – |
+| `GET /seasons` | Seasons with matches, champion, runs, wickets, fours, sixes, average score and run rate (V1.5) | single page |
+| `GET /seasons/{year}/summary` | Matches, runs, wickets, average score, highest / lowest completed team score, champion, highest individual score (V1.5), top run scorer, top wicket taker, best strike rate (`minimumBalls`, default 100), best economy (`minimumOvers`, default 10) | – |
 | `GET /seasons/{year}/points-table` | League-stage table: matches, wins, losses, ties, no results, points, net run rate | – |
-| `GET /teams` | Franchises with every historical name | single page |
+| `GET /teams` | Franchises with every historical name, all-time record and latest-season record (V1.5) | single page |
 | `GET /teams/{id}` | One franchise | – |
-| `GET /teams/{id}/stats` | Overall, batting-first, chasing, home, away records; average scores and run rates | – |
+| `GET /teams/{id}/stats` | Overall, batting-first, chasing, home, away records; average scores and run rates | – | Includes `highestScore` (V1.5).
 | `GET /teams/{id}/seasons` | The same, per season | single page |
 | `GET /teams/{id}/top-performers` | Leading run scorers and wicket takers (`limit` 1–25, default 5) | – |
+| `GET /teams/{id}/venues` | Record, scores and run rates at each venue, most matches first (V1.5) | single page |
+| `GET /teams/{id}/opponents` | Record against each opponent, most matches first (V1.5) | single page |
 | `GET /venues` | Venues with aliases and match count | single page |
 | `GET /venues/{id}` | One venue | – |
 | `GET /venues/{id}/stats` | Matches, average first-innings score, highest / lowest, bat-first and chasing win %, average run rate, wickets and boundaries per innings | – |
-| `GET /players` | Search by any name the player used (`search`, `page`, `size`) | yes |
+| `GET /venues/{id}/seasons` | The same figures for each season (V1.5) | single page |
+| `GET /venues/{id}/score-distribution` | First-innings totals in 20-run bands (V1.5) | single page |
+| `GET /players` | Players who played in the scope with matches, runs, average, strike rate, wickets, economy and latest team; `search`, `season`/`seasonFrom`/`seasonTo`, `team`, `discipline` (batting/bowling), `sort` (name, matches, runs, wickets), `page`, `size` (V1.5) | yes |
 | `GET /players/{id}` | Profile: names over time, franchises | – |
 | `GET /players/{id}/batting` | Career batting and per season | – |
 | `GET /players/{id}/bowling` | Career bowling and per season | – |
-| `GET /players/{id}/phases` | Powerplay / middle / death batting and bowling | – |
+| `GET /players/{id}/phases` | Powerplay / middle / death batting (runs, balls, strike rate, run share, fours, sixes, boundary % — V1.5) and bowling | – |
 | `GET /players/{id}/vs-teams` | Batting and bowling per opponent | – |
 | `GET /players/{id}/venues` | Batting and bowling per venue | – |
 | `GET /players/compare` | 2–5 players side by side (`ids=1,2`, `discipline=batting\|bowling`) | – |
 | `GET /matches` | Results, newest first (`season` or `seasonFrom`/`seasonTo`, `team`, `opponent`, `venue`, `dateFrom`, `dateTo`, `stage`) | yes |
 | `GET /matches/{id}` | Teams, toss, result, target, officials, innings scores, player of the match | – |
-| `GET /matches/{id}/scorecard` | Per innings: batting with dismissals, did not bat, bowling, extras, fall of wickets | – |
+| `GET /matches/{id}/scorecard` | Per innings: batting with dismissals, did not bat, bowling (with maidens — V1.5), extras, fall of wickets | – |
 | `GET /matches/{id}/progression` | Per over: runs, wickets, extras (Manhattan) and running totals with run rate (worm) | – |
 | `GET /head-to-head` | `team1`, `team2`: wins, ties, no results, batting-first / chasing wins, average scores, by season, five latest meetings | – |
 | `GET /matchups` | `batterId`, `bowlerId`: balls, runs, dismissals, 4s, 6s, strike rate, average, dot %, boundary % | – |
 | `GET /leaderboards/batting` | `metric` = runs, average, strikeRate, fours, sixes, hundreds, fifties; `minimumBalls`; `team`; `limit` | single page |
 | `GET /leaderboards/bowling` | `metric` = wickets, economy, average, strikeRate, dotBalls; `minimumOvers`; `team`; `limit` | single page |
+| `GET /overview` | Data-set counts: seasons, matches, franchises, players, venues, deliveries (V1.5) | – |
 | `GET /system/status` | App version, schema version (V0, not enveloped) | – |
 
 Common filters on statistics endpoints: `season`, or `seasonFrom` / `seasonTo` (inclusive; not combined with
@@ -146,3 +151,21 @@ Real-data response times (1,243 matches, warm, local Docker PostgreSQL): 18–65
 - **Matchup dismissals** are wickets credited to the bowler; run outs are not.
 - **Comparison**: players are returned in the requested order; a player with no figures in the filter gets zero
   counts and null ratios rather than an error.
+
+## V1.5 additions (frontend compatibility)
+
+Added for the React dashboard so the browser never has to compute cricket statistics. All are additive; no
+existing field changed meaning.
+
+- **Maidens**: complete overs (6 or more legal balls) bowled by one bowler conceding no runs to the bowler; byes and
+  leg byes do not spoil a maiden.
+- **Phase boundaries**: fours and sixes off the bat (run fours excluded) per phase; boundary % = boundaries × 100 ÷
+  balls faced in the phase.
+- **Score distribution**: first-innings totals of matches with a result and no D/L adjustment, in the bands under
+  120, 120–139, ... 200–219 and 220 and over; every band is returned.
+- **Player list**: figures exclude super overs; `team` is the franchise of the player's latest match in scope;
+  players with no appearance in scope are not listed. One query per page, with the total from a window count.
+- **Team list records**: all-time record and the record in each franchise's last season, from two grouped queries
+  for the whole list.
+- **OpenAPI**: primitive fields of response records are marked `required`, so generated TypeScript types declare
+  them non-optional.

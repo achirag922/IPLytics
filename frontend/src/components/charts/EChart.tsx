@@ -11,7 +11,7 @@ interface EChartProps {
   ariaLabel?: string;
 }
 
-/** Thin React wrapper around ECharts: owns the instance lifecycle and resizing. */
+/** Thin React wrapper around ECharts: owns the instance lifecycle and resizes with its container. */
 export function EChart({ option, height = 320, className, ariaLabel }: EChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<EChartInstance | null>(null);

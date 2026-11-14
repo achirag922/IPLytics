@@ -26,4 +26,11 @@ public final class VenueDtos {
                                 BigDecimal averageRunRate, long innings, BigDecimal wicketsPerInnings,
                                 BigDecimal boundariesPerInnings) {
     }
+
+    public record VenueSeasonStatsDto(int season, VenueStatsDto stats) {
+    }
+
+    @Schema(description = "Band of first-innings totals: from and to are inclusive; null means unbounded")
+    public record ScoreBandDto(Integer from, Integer to, long innings) {
+    }
 }

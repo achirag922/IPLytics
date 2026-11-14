@@ -1,7 +1,5 @@
 package com.iplytics.player.repository;
 
-import com.iplytics.common.web.PageSlice;
-import com.iplytics.common.web.Pagination;
 import com.iplytics.player.api.PlayerDtos.PlayerAliasDto;
 import com.iplytics.player.api.PlayerDtos.PlayerSummaryDto;
 import java.sql.ResultSet;
@@ -31,23 +29,6 @@ public class PlayerRepository {
         this.jdbc = jdbc;
     }
 
-    /** Case-insensitive substring search; wildcard characters in the term are matched literally. */
-    public PageSlice<PlayerSummaryDto> search(String term, int page, int size) {
-        MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("limit", size).addValue("offset", Pagination.offset(page, size));
-        String where = "";
-        if (term != null && !term.isBlank()) {
-            params.addValue("pattern", "%" + escapeLike(term.trim()) + "%");
-            where = " " + """
-                     where p.display_name ilike :pattern escape '\\'
-                        or exists (select 1 from core.player_alias a where a.player_id = p.id and a.name ilike :pattern escape '\\')""";
-        }
-        List<PlayerSummaryDto> rows = jdbc.query(SUMMARY + where + " order by p.display_name, p.id limit :limit offset :offset",
-                params, (rs, n) -> summary(rs));
-        Long total = jdbc.queryForObject("select count(*) from core.player p" + where, params, Long.class);
-        return new PageSlice<>(rows, total == null ? 0 : total);
-    }
-
     public Optional<PlayerSummaryDto> find(int id) {
         return jdbc.query(SUMMARY + " where p.id = :id", new MapSqlParameterSource("id", id), (rs, n) -> summary(rs))
                 .stream().findFirst();
@@ -71,10 +52,6 @@ public class PlayerRepository {
     }
 
     public record TeamSpell(int teamId, long matches, int firstSeason, int lastSeason) {
-    }
-
-    static String escapeLike(String term) {
-        return term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
     }
 
     private static PlayerSummaryDto summary(ResultSet rs) throws SQLException {

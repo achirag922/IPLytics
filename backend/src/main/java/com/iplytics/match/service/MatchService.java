@@ -179,7 +179,7 @@ public class MatchService {
 
     private static BowlingLineDto bowlingLine(BowlingRow b) {
         return new BowlingLineDto(new PlayerRef(b.playerId(), b.playerName()), CricketMetrics.overs(b.legalBalls()),
-                b.legalBalls(), b.runsConceded(), b.wickets(), b.economy(), b.dotBalls(), b.wides(), b.noBalls(),
+                b.maidens(), b.legalBalls(), b.runsConceded(), b.wickets(), b.economy(), b.dotBalls(), b.wides(), b.noBalls(),
                 b.foursConceded(), b.sixesConceded());
     }
 

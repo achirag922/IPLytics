@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,14 +79,34 @@ public class BattingQueries {
                        coalesce(sum(b.middle_runs), 0) as middle_runs, coalesce(sum(b.middle_balls), 0) as middle_balls,
                        coalesce(sum(b.death_runs), 0) as death_runs, coalesce(sum(b.death_balls), 0) as death_balls
                   from analytics.batting_innings b where b.player_id = :playerId""" + filter.conditions("b", true, params);
+        Map<String, long[]> boundaries = phaseBoundaries(playerId, filter);
         return jdbc.queryForObject(sql, params, (rs, n) -> List.of(
-                phase(CricketPhase.POWERPLAY, rs.getLong("powerplay_runs"), rs.getLong("powerplay_balls")),
-                phase(CricketPhase.MIDDLE, rs.getLong("middle_runs"), rs.getLong("middle_balls")),
-                phase(CricketPhase.DEATH, rs.getLong("death_runs"), rs.getLong("death_balls"))));
+                phase(CricketPhase.POWERPLAY, rs.getLong("powerplay_runs"), rs.getLong("powerplay_balls"), boundaries),
+                phase(CricketPhase.MIDDLE, rs.getLong("middle_runs"), rs.getLong("middle_balls"), boundaries),
+                phase(CricketPhase.DEATH, rs.getLong("death_runs"), rs.getLong("death_balls"), boundaries)));
     }
 
-    private static PhaseBatting phase(CricketPhase phase, long runs, long balls) {
-        return new PhaseBatting(phase, runs, balls, CricketMetrics.strikeRate(runs, balls));
+    /** Fours and sixes off the bat per phase (phase name -> [fours, sixes]), from the player's deliveries. */
+    private Map<String, long[]> phaseBoundaries(int playerId, AnalyticsFilter filter) {
+        MapSqlParameterSource params = new MapSqlParameterSource("playerId", playerId);
+        String sql = """
+                select analytics.phase(d.over_number, d.is_super_over) as phase,
+                       count(*) filter (where d.batter_runs = 4 and not d.non_boundary) as fours,
+                       count(*) filter (where d.batter_runs = 6 and not d.non_boundary) as sixes
+                  from core.delivery d
+                  join analytics.batting_innings b on b.innings_id = d.innings_id and b.player_id = d.batter_id
+                 where d.batter_id = :playerId""" + filter.conditions("b", true, params) + " group by 1";
+        Map<String, long[]> result = new HashMap<>();
+        jdbc.query(sql, params, rs -> {
+            result.put(rs.getString("phase"), new long[] {rs.getLong("fours"), rs.getLong("sixes")});
+        });
+        return result;
+    }
+
+    private static PhaseBatting phase(CricketPhase phase, long runs, long balls, Map<String, long[]> boundaries) {
+        long[] b = boundaries.getOrDefault(phase.sqlName(), new long[] {0, 0});
+        return new PhaseBatting(phase, runs, balls, CricketMetrics.strikeRate(runs, balls), b[0], b[1],
+                CricketMetrics.boundaryPercentage(b[0] + b[1], balls));
     }
 
     static BattingStats map(ResultSet rs) throws SQLException {
@@ -127,6 +148,8 @@ public class BattingQueries {
     public record Grouped(int key, BattingStats stats) {
     }
 
-    public record PhaseBatting(CricketPhase phase, long runs, long balls, BigDecimal strikeRate) {
+    /** boundaryPercentage = fours and sixes off the bat per 100 balls faced in the phase. */
+    public record PhaseBatting(CricketPhase phase, long runs, long balls, BigDecimal strikeRate, long fours, long sixes,
+                               BigDecimal boundaryPercentage) {
     }
 }

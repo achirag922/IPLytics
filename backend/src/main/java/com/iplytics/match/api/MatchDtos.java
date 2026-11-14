@@ -66,9 +66,10 @@ public final class MatchDtos {
                                  int balls, int fours, int sixes, BigDecimal strikeRate, boolean out) {
     }
 
-    public record BowlingLineDto(PlayerRef player, String overs, int legalBalls, int runsConceded, int wickets,
-                                 BigDecimal economy, int dotBalls, int wides, int noBalls, int foursConceded,
-                                 int sixesConceded) {
+    @Schema(description = "maidens = complete overs bowled by one bowler conceding no runs to the bowler (byes and leg byes allowed)")
+    public record BowlingLineDto(PlayerRef player, String overs, int maidens, int legalBalls, int runsConceded,
+                                 int wickets, BigDecimal economy, int dotBalls, int wides, int noBalls,
+                                 int foursConceded, int sixesConceded) {
     }
 
     public record FallOfWicketDto(int wicket, int score, @Schema(example = "7.3") String over, PlayerRef player) {

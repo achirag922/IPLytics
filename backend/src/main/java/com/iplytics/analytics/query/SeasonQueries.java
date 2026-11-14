@@ -4,7 +4,9 @@ import com.iplytics.common.metrics.CricketMetrics;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -67,18 +69,48 @@ public class SeasonQueries {
         this.jdbc = jdbc;
     }
 
+    private static final String TOTALS = """
+            select count(distinct s.match_id) as matches, count(*) as innings,
+                   coalesce(sum(s.total_runs), 0) as runs, coalesce(sum(s.wickets), 0) as wickets,
+                   coalesce(sum(s.fours), 0) as fours, coalesce(sum(s.sixes), 0) as sixes,
+                   coalesce(sum(s.legal_balls), 0) as legal_balls""";
+
     public SeasonTotals totals(int year) {
         MapSqlParameterSource params = new MapSqlParameterSource("year", year);
-        return jdbc.queryForObject("""
-                select count(distinct s.match_id) as matches, count(*) as innings,
-                       coalesce(sum(s.total_runs), 0) as runs, coalesce(sum(s.wickets), 0) as wickets,
-                       coalesce(sum(s.fours), 0) as fours, coalesce(sum(s.sixes), 0) as sixes,
-                       coalesce(sum(s.legal_balls), 0) as legal_balls
-                  from analytics.innings_summary s where s.season_year = :year and not s.is_super_over""", params,
-                (rs, n) -> new SeasonTotals(rs.getLong("matches"), rs.getLong("innings"), rs.getLong("runs"),
-                        rs.getLong("wickets"), rs.getLong("fours"), rs.getLong("sixes"),
-                        CricketMetrics.mean(rs.getLong("runs"), rs.getLong("innings")),
-                        CricketMetrics.runRate(rs.getLong("runs"), rs.getLong("legal_balls"))));
+        return jdbc.queryForObject(TOTALS + " from analytics.innings_summary s"
+                + " where s.season_year = :year and not s.is_super_over", params, (rs, n) -> seasonTotals(rs));
+    }
+
+    /** {@link #totals(int)} for every season in one grouped query, in season order. */
+    public Map<Integer, SeasonTotals> totalsBySeason() {
+        Map<Integer, SeasonTotals> result = new LinkedHashMap<>();
+        jdbc.query(TOTALS + ", s.season_year from analytics.innings_summary s where not s.is_super_over"
+                + " group by s.season_year order by s.season_year", new MapSqlParameterSource(),
+                rs -> {
+                    result.put(rs.getInt("season_year"), seasonTotals(rs));
+                });
+        return result;
+    }
+
+    /** Highest regular-innings score by one batter in the season (fewest balls, then earliest, on a tie). */
+    public Optional<IndividualScore> highestIndividualScore(int year) {
+        return jdbc.query("""
+                select b.player_id, b.team_id, b.opponent_team_id, b.match_id, b.match_date, b.runs, b.balls,
+                       not b.is_out as not_out
+                  from analytics.batting_innings b
+                 where b.season_year = :year and not b.is_super_over
+                 order by b.runs desc, b.balls, b.match_date, b.match_id limit 1""",
+                new MapSqlParameterSource("year", year), (rs, n) -> new IndividualScore(rs.getInt("player_id"),
+                        rs.getInt("team_id"), rs.getInt("opponent_team_id"), rs.getInt("match_id"),
+                        rs.getObject("match_date", java.time.LocalDate.class), rs.getInt("runs"), rs.getInt("balls"),
+                        rs.getBoolean("not_out"))).stream().findFirst();
+    }
+
+    private static SeasonTotals seasonTotals(ResultSet rs) throws SQLException {
+        return new SeasonTotals(rs.getLong("matches"), rs.getLong("innings"), rs.getLong("runs"),
+                rs.getLong("wickets"), rs.getLong("fours"), rs.getLong("sixes"),
+                CricketMetrics.mean(rs.getLong("runs"), rs.getLong("innings")),
+                CricketMetrics.runRate(rs.getLong("runs"), rs.getLong("legal_balls")));
     }
 
     public Optional<TeamScore> highestTeamScore(int year) {
@@ -119,6 +151,10 @@ public class SeasonQueries {
 
     public record SeasonTotals(long matches, long innings, long runs, long wickets, long fours, long sixes,
                                BigDecimal averageScore, BigDecimal runRate) {
+    }
+
+    public record IndividualScore(int playerId, int teamId, int opponentId, int matchId, java.time.LocalDate date,
+                                  int runs, int balls, boolean notOut) {
     }
 
     public record TeamScore(int matchId, int teamId, int opponentId, int runs, int wickets, int legalBalls,

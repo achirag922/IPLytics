@@ -18,9 +18,10 @@ import com.iplytics.analytics.comparison.Discipline;
 import com.iplytics.common.exception.ResourceNotFoundException;
 import com.iplytics.common.exception.UnprocessableRequestException;
 import com.iplytics.common.web.PageSlice;
-import com.iplytics.player.api.PlayerDtos.PlayerSummaryDto;
+import com.iplytics.player.api.PlayerDtos.PlayerListItemDto;
 import com.iplytics.player.service.PlayerService;
 import com.iplytics.support.ApiControllerTest;
+import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -36,18 +37,31 @@ class PlayerControllerTest extends ApiControllerTest {
     private ComparisonService comparison;
 
     @Test
-    void searchIsPaged() throws Exception {
-        when(players.search("sharma", 2, 5)).thenReturn(new PageSlice<>(
-                List.of(new PlayerSummaryDto(4, "RG Sharma", "740742ef", 250, 2008, 2026)), 11));
+    void searchIsPagedAndScoped() throws Exception {
+        when(players.list(eq("sharma"), any(PlayerListParams.class), eq(Discipline.BATTING), eq(PlayerSort.RUNS), eq(2),
+                eq(5))).thenReturn(new PageSlice<>(List.of(new PlayerListItemDto(4, "RG Sharma", "740742ef", null, 250,
+                2008, 2026, 245, 6600, new BigDecimal("29.60"), new BigDecimal("131.20"), 30, 15, new BigDecimal("8.03"))), 11));
 
-        mvc.perform(get("/api/v1/players").param("search", "sharma").param("page", "2").param("size", "5"))
+        mvc.perform(get("/api/v1/players").param("search", "sharma").param("page", "2").param("size", "5")
+                        .param("discipline", "batting").param("sort", "runs").param("seasonFrom", "2010"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[0].name").value("RG Sharma"))
                 .andExpect(jsonPath("$.pagination.page").value(2))
                 .andExpect(jsonPath("$.pagination.size").value(5))
                 .andExpect(jsonPath("$.pagination.totalElements").value(11))
                 .andExpect(jsonPath("$.pagination.totalPages").value(3))
-                .andExpect(jsonPath("$.meta.filters.search").value("sharma"));
+                .andExpect(jsonPath("$.meta.filters.search").value("sharma"))
+                .andExpect(jsonPath("$.meta.filters.seasonFrom").value(2010))
+                .andExpect(jsonPath("$.meta.filters.discipline").value("batting"))
+                .andExpect(jsonPath("$.meta.sort").value("runs"));
+    }
+
+    @Test
+    void unknownPlayerSortListsAllowedValues() throws Exception {
+        mvc.perform(get("/api/v1/players").param("sort", "average"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.allowedValues", hasItems("name", "matches", "runs", "wickets")));
+        verifyNoInteractions(players);
     }
 
     @Test

@@ -2,7 +2,7 @@
 
 A full-stack platform for exploring Indian Premier League data: team, player, match, venue and season analytics, head-to-heads, player comparisons and advanced batting and bowling analysis.
 
-> **Status: V1.4 (REST API).** Cricsheet IPL 2008–2026 data flows from source to staging, into a normalized `core` schema and a reconciled `analytics` layer, and is served by a documented read-only REST API under `/api/v1`. UI pages come next. See the [roadmap](#roadmap).
+> **Status: V1.5 (React analytics dashboard).** Cricsheet IPL 2008–2026 data flows from source to staging, into a normalized `core` schema and a reconciled `analytics` layer, is served by a documented read-only REST API under `/api/v1`, and is explored in a React dashboard (teams, players, matches with scorecards and worm/Manhattan charts, venues, seasons, head-to-head, comparisons, matchups, leaderboards). See the [roadmap](#roadmap).
 
 ## Tech stack
 
@@ -10,7 +10,7 @@ A full-stack platform for exploring Indian Premier League data: team, player, ma
 |---|---|
 | Backend | Java 17, Spring Boot 3.5, Spring Data JPA, Flyway, springdoc-openapi |
 | Database | PostgreSQL 16 (Docker Compose locally, Testcontainers in tests) |
-| Frontend | React 19, TypeScript, Vite, React Router, TanStack Query, ECharts, Tailwind CSS |
+| Frontend | React 19, TypeScript, Vite, React Router, TanStack Query, ECharts, Tailwind CSS, shadcn/ui; Vitest, Testing Library, MSW |
 | Testing | JUnit 5, Mockito, AssertJ, Testcontainers, Vitest, React Testing Library |
 | CI | GitHub Actions |
 
@@ -161,7 +161,13 @@ cd backend && ./mvnw test
 cd backend && ./mvnw verify
 
 # Frontend: the same checks CI runs
-cd frontend && npm run lint && npm run typecheck && npm test && npm run build
+cd frontend && npm run lint && npm run format:check && npm run typecheck && npm test && npm run build
+
+# Frontend/backend contract check (needs the backend running on :8080 with data loaded)
+cd frontend && npm run test:contract
+
+# After a backend API change: regenerate the frontend's API types from backend/target/openapi.json
+cd frontend && npm run generate:api
 ```
 
 ## Project layout
@@ -182,6 +188,7 @@ docs/adr/           Architecture Decision Records
 - [Metric definitions](docs/metrics.md)
 - [Analytics layer](docs/analytics.md)
 - [REST API](docs/api.md)
+- [Frontend](docs/frontend.md)
 - [Architecture decisions](docs/adr/README.md)
 
 ## Roadmap
@@ -193,6 +200,7 @@ docs/adr/           Architecture Decision Records
 | **V1.2** ✅ | Core data model: seasons, franchises, venues, players (Cricsheet ids), matches, innings, deliveries, wickets, playing lists; idempotent set-based transform with reconciliation |
 | **V1.3** ✅ | Analytics layer: batting/bowling/innings/team-match views, formula functions mirrored by CricketMetrics, phases, concurrent audited refresh, team/player/venue/head-to-head/leaderboard queries |
 | **V1.4** ✅ | REST API: seasons, points tables, teams, venues, players, matches with scorecards and progression, head-to-head, comparisons, matchups, leaderboards; OpenAPI contract, problem-detail errors, ETag caching |
-| V1.5+ | UI pages; then hardening |
+| **V1.5** ✅ | React analytics dashboard: dashboard, teams, players, matches (scorecard, worm, Manhattan), venues, seasons, head-to-head, comparison, matchups, leaderboards; URL filters, generated API types, page tests with MSW, frontend/backend contract check |
+| V1.6+ | Hardening |
 | V2 | Incremental ETL pipeline, data-quality reports |
 | V3+ | Redis, Kafka (live data), AI insights, predictions |

@@ -13,9 +13,19 @@ public final class SeasonDtos {
     private SeasonDtos() {
     }
 
+    @Schema(description = """
+            A season with its totals over regular innings (super overs excluded): averageScore = runs per innings,
+            runRate = runs per 6 legal balls.""")
     public record SeasonDto(@Schema(example = "2024") int year, @Schema(example = "IPL 2024") String name,
                             @Schema(description = "Label used by the source", example = "2024") String sourceSeason,
-                            long matches, @Schema(description = "Winner of the Final; null if unknown") TeamRef champion) {
+                            long matches, @Schema(description = "Winner of the Final; null if unknown") TeamRef champion,
+                            long runs, long wickets, long fours, long sixes, BigDecimal averageScore,
+                            BigDecimal runRate) {
+    }
+
+    @Schema(description = "Highest score by one batter in a regular innings")
+    public record IndividualScoreDto(PlayerRef player, TeamRef team, TeamRef opponent, int runs, int balls,
+                                     boolean notOut, int matchId, LocalDate date) {
     }
 
     public record TeamScoreDto(TeamRef team, TeamRef opponent, int runs, int wickets,
@@ -30,7 +40,8 @@ public final class SeasonDtos {
             lowestTeamScore is the lowest innings that was all out or used its full overs.""")
     public record SeasonSummaryDto(int year, String name, long matches, long totalRuns, long wickets, long fours,
                                    long sixes, BigDecimal averageScore, BigDecimal runRate, TeamScoreDto highestTeamScore,
-                                   TeamScoreDto lowestTeamScore, TeamRef champion, SeasonLeaderDto topRunScorer,
+                                   TeamScoreDto lowestTeamScore, IndividualScoreDto highestIndividualScore,
+                                   TeamRef champion, SeasonLeaderDto topRunScorer,
                                    SeasonLeaderDto topWicketTaker,
                                    @Schema(description = "Best strike rate with at least strikeRateMinimumBalls balls faced")
                                    SeasonLeaderDto highestStrikeRate, int strikeRateMinimumBalls,

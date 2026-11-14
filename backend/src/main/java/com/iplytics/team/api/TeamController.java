@@ -4,6 +4,8 @@ import com.iplytics.common.web.ApiMetaFactory;
 import com.iplytics.common.web.ApiResponse;
 import com.iplytics.common.web.StatsFilterParams;
 import com.iplytics.team.api.TeamDtos.TeamDto;
+import com.iplytics.team.api.TeamDtos.TeamOpponentStatsDto;
+import com.iplytics.team.api.TeamDtos.TeamVenueStatsDto;
 import com.iplytics.team.api.TeamDtos.TeamSeasonStatsDto;
 import com.iplytics.team.api.TeamDtos.TeamStatsDto;
 import com.iplytics.team.api.TeamDtos.TopPerformersDto;
@@ -62,6 +64,20 @@ public class TeamController {
     public ApiResponse<List<TeamSeasonStatsDto>> seasons(@PathVariable @Positive int id,
                                                          @ParameterObject @Valid StatsFilterParams filter) {
         return ApiResponse.list(service.seasons(id, filter), meta.meta(filter.describe()));
+    }
+
+    @GetMapping("/{id}/venues")
+    @Operation(summary = "Record per venue", description = "Results, scores and run rates of the franchise at each venue, most matches first.")
+    public ApiResponse<List<TeamVenueStatsDto>> venues(@PathVariable @Positive int id,
+                                                       @ParameterObject @Valid StatsFilterParams filter) {
+        return ApiResponse.list(service.venues(id, filter), meta.meta(filter.describe()));
+    }
+
+    @GetMapping("/{id}/opponents")
+    @Operation(summary = "Record against each opponent", description = "Head-to-head records of the franchise against every opponent, most matches first.")
+    public ApiResponse<List<TeamOpponentStatsDto>> opponents(@PathVariable @Positive int id,
+                                                             @ParameterObject @Valid StatsFilterParams filter) {
+        return ApiResponse.list(service.opponents(id, filter), meta.meta(filter.describe()));
     }
 
     @GetMapping("/{id}/top-performers")

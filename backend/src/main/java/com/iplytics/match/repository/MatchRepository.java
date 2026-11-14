@@ -120,9 +120,19 @@ public class MatchRepository {
     /** Bowlers in the order they first bowled, from analytics.bowling_innings. */
     public List<BowlingRow> bowling(int matchId) {
         return jdbc.query("""
+                with overs as (
+                    select d.innings_id, d.over_number, min(d.bowler_id) as bowler_id
+                      from core.delivery d join core.innings i on i.id = d.innings_id
+                     where i.match_id = :id
+                     group by d.innings_id, d.over_number
+                    having count(distinct d.bowler_id) = 1 and count(*) filter (where d.is_legal_ball) >= 6
+                       and sum(analytics.bowler_runs(d.total_runs, d.byes, d.legbyes, d.penalty)) = 0),
+                maidens as (select innings_id, bowler_id, count(*) as maidens from overs group by innings_id, bowler_id)
                 select b.innings_id, b.player_id, p.display_name, b.legal_balls, b.runs_conceded, b.wickets, b.economy,
-                       b.dot_balls, b.wides, b.no_balls, b.fours_conceded, b.sixes_conceded
+                       b.dot_balls, b.wides, b.no_balls, b.fours_conceded, b.sixes_conceded,
+                       coalesce(m.maidens, 0) as maidens
                   from analytics.bowling_innings b join core.player p on p.id = b.player_id
+                  left join maidens m on m.innings_id = b.innings_id and m.bowler_id = b.player_id
                  where b.match_id = :id
                  order by b.innings_number,
                           (select min(d.over_number * 1000 + d.ball_in_over) from core.delivery d
@@ -131,7 +141,7 @@ public class MatchRepository {
                         rs.getInt("player_id"), rs.getString("display_name"), rs.getInt("legal_balls"),
                         rs.getInt("runs_conceded"), rs.getInt("wickets"), rs.getBigDecimal("economy"),
                         rs.getInt("dot_balls"), rs.getInt("wides"), rs.getInt("no_balls"), rs.getInt("fours_conceded"),
-                        rs.getInt("sixes_conceded")));
+                        rs.getInt("sixes_conceded"), rs.getInt("maidens")));
     }
 
     /** Score and over (overs.legal balls, as on a scorecard) at each dismissal; retirements are not dismissals. */
@@ -262,7 +272,7 @@ public class MatchRepository {
 
     public record BowlingRow(int inningsId, int playerId, String playerName, int legalBalls, int runsConceded,
                              int wickets, BigDecimal economy, int dotBalls, int wides, int noBalls, int foursConceded,
-                             int sixesConceded) {
+                             int sixesConceded, int maidens) {
     }
 
     public record FallOfWicketRow(int inningsId, int wicket, int score, String ball, int playerId, String playerName) {

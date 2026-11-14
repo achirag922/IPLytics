@@ -11,7 +11,7 @@ ADRs are immutable once **Accepted**. To change one, add a new ADR that supersed
 | [0004](0004-cli-set-based-ingestion.md) | CLI-triggered, set-based ingestion | Accepted |
 | [0005](0005-analytics-query-strategy.md) | Analytics query strategy | Accepted |
 | [0006](0006-testing-strategy.md) | Testing strategy with Testcontainers | Accepted |
-| [0007](0007-frontend-stack.md) | Frontend stack | Accepted |
+| [0007](0007-frontend-stack.md) | Frontend stack | Accepted, implemented in V1.5 (docs/frontend.md) |
 | [0008](0008-api-conventions.md) | REST API conventions | Accepted, amended by 0012 |
 | [0009](0009-initial-data-source.md) | Initial IPL data source | Superseded: Cricsheet JSON is the source (see docs/data-source.md) |
 | [0010](0010-core-model-and-transformation.md) | Core model and staging → core transformation | Accepted |

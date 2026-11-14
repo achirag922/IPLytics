@@ -1,10 +1,12 @@
 package com.iplytics.player.service;
 
+import com.iplytics.analytics.comparison.Discipline;
 import com.iplytics.analytics.query.AnalyticsFilter;
 import com.iplytics.analytics.query.BattingQueries;
 import com.iplytics.analytics.query.BowlingQueries;
 import com.iplytics.analytics.query.Grouping;
 import com.iplytics.analytics.query.ParticipationQueries;
+import com.iplytics.analytics.query.PlayerTotalsQueries;
 import com.iplytics.common.exception.ResourceNotFoundException;
 import com.iplytics.common.metrics.CricketMetrics;
 import com.iplytics.common.web.PageSlice;
@@ -21,6 +23,7 @@ import com.iplytics.player.api.PlayerDtos.PhaseBowlingDto;
 import com.iplytics.player.api.PlayerDtos.PlayerBattingDto;
 import com.iplytics.player.api.PlayerDtos.PlayerBowlingDto;
 import com.iplytics.player.api.PlayerDtos.PlayerDetailDto;
+import com.iplytics.player.api.PlayerDtos.PlayerListItemDto;
 import com.iplytics.player.api.PlayerDtos.PlayerPhasesDto;
 import com.iplytics.player.api.PlayerDtos.PlayerSummaryDto;
 import com.iplytics.player.api.PlayerDtos.PlayerTeamDto;
@@ -29,6 +32,8 @@ import com.iplytics.player.api.PlayerDtos.PlayerVsTeamsDto;
 import com.iplytics.player.api.PlayerDtos.SeasonBattingDto;
 import com.iplytics.player.api.PlayerDtos.SeasonBowlingDto;
 import com.iplytics.player.api.PlayerDtos.VenueSplitDto;
+import com.iplytics.player.api.PlayerListParams;
+import com.iplytics.player.api.PlayerSort;
 import com.iplytics.player.api.PlayerStatsMapper;
 import com.iplytics.player.repository.PlayerRepository;
 import java.util.Comparator;
@@ -50,19 +55,33 @@ public class PlayerService {
     private final BattingQueries batting;
     private final BowlingQueries bowling;
     private final ParticipationQueries participation;
+    private final PlayerTotalsQueries playerTotals;
     private final RefLookup refs;
 
     public PlayerService(PlayerRepository players, BattingQueries batting, BowlingQueries bowling,
-                         ParticipationQueries participation, RefLookup refs) {
+                         ParticipationQueries participation, PlayerTotalsQueries playerTotals, RefLookup refs) {
         this.players = players;
+        this.playerTotals = playerTotals;
         this.batting = batting;
         this.bowling = bowling;
         this.participation = participation;
         this.refs = refs;
     }
 
-    public PageSlice<PlayerSummaryDto> search(String term, int page, int size) {
-        return players.search(term, page, size);
+    /** Paged players in scope with their totals; ratios via CricketMetrics, team refs from one lookup. */
+    public PageSlice<PlayerListItemDto> list(String term, PlayerListParams scope, Discipline discipline,
+                                             PlayerSort sort, int page, int size) {
+        scope.requireKnownReferences(refs);
+        PlayerTotalsQueries.Requires requires = discipline == null ? PlayerTotalsQueries.Requires.ANY
+                : discipline == Discipline.BATTING ? PlayerTotalsQueries.Requires.BATTED : PlayerTotalsQueries.Requires.BOWLED;
+        PageSlice<PlayerTotalsQueries.PlayerTotalsRow> slice =
+                playerTotals.list(term, scope.toFilter(), requires, sort.order(), page, size);
+        Map<Integer, TeamRef> teams = refs.teams();
+        return new PageSlice<>(slice.items().stream().map(r -> new PlayerListItemDto(r.id(), r.name(), r.sourceId(),
+                r.teamId() == null ? null : teams.get(r.teamId()), r.matches(), r.firstSeason(), r.lastSeason(),
+                r.battingInnings(), r.runs(), CricketMetrics.battingAverage(r.runs(), r.dismissals()),
+                CricketMetrics.strikeRate(r.runs(), r.balls()), r.bowlingInnings(), r.wickets(),
+                CricketMetrics.economy(r.runsConceded(), r.legalBalls()))).toList(), slice.total());
     }
 
     public PlayerDetailDto detail(int id) {
@@ -106,7 +125,8 @@ public class PlayerService {
         long totalRuns = battingPhases.stream().mapToLong(BattingQueries.PhaseBatting::runs).sum();
         return new PlayerPhasesDto(player,
                 battingPhases.stream().map(p -> new PhaseBattingDto(p.phase().sqlName(), p.runs(), p.balls(),
-                        p.strikeRate(), CricketMetrics.percentage(p.runs(), totalRuns))).toList(),
+                        p.strikeRate(), CricketMetrics.percentage(p.runs(), totalRuns), p.fours(), p.sixes(),
+                        p.boundaryPercentage())).toList(),
                 bowling.phases(id, filter).stream().map(p -> new PhaseBowlingDto(p.phase().sqlName(), p.legalBalls(),
                         CricketMetrics.overs(p.legalBalls()), p.runsConceded(), p.wickets(), p.economy())).toList());
     }

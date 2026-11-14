@@ -1,6 +1,6 @@
 # 0007 Frontend stack
 
-**Status:** Accepted (V0)
+**Status:** Accepted (V0). Implemented in V1.5: see docs/frontend.md.
 
 ## Decision
 - **React 19 + TypeScript (strict) + Vite.** Plain SPA, no server-side rendering.
@@ -13,4 +13,4 @@
 
 ## Consequences
 - From V1, API types will be generated from the backend OpenAPI document (`openapi-typescript`) instead of being written by hand.
-- ECharts needs a canvas, so unit tests mock the wrapper's ECharts module. Real rendering is covered by end-to-end tests in V1.3.
+- ECharts needs a canvas, so unit tests replace the chart wrapper; real rendering is checked in the browser and by the contract tests (V1.5).

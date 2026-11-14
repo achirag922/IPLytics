@@ -95,6 +95,90 @@ class ApiIT extends AbstractIntegrationTest {
         call("/api/v1/venues/" + wankhede).andExpect(jsonPath("$.data.matches").value(1));
     }
 
+    // ---- V1.5 additions used by the dashboard ----------------------------------------------------------------
+
+    @Test
+    void overviewCountsTheDataSet() throws Exception {
+        call("/api/v1/overview")
+                .andExpect(jsonPath("$.data.seasons").value(6))
+                .andExpect(jsonPath("$.data.firstSeason").value(2008))
+                .andExpect(jsonPath("$.data.lastSeason").value(2023))
+                .andExpect(jsonPath("$.data.matches").value(6))
+                .andExpect(jsonPath("$.data.teams").value(id("""
+                        select count(distinct t) from (select team1_id t from core.match union select team2_id from core.match) x""")))
+                .andExpect(jsonPath("$.data.players").value(id("select count(distinct player_id) from core.match_player")))
+                .andExpect(jsonPath("$.data.deliveries").value(id("select count(*) from core.delivery")));
+    }
+
+    @Test
+    void seasonTotalsAndHighestIndividualScore() throws Exception {
+        call("/api/v1/seasons")
+                .andExpect(jsonPath("$.data[3].year").value(2019))
+                .andExpect(jsonPath("$.data[3].runs").value(50))
+                .andExpect(jsonPath("$.data[3].wickets").value(5))
+                .andExpect(jsonPath("$.data[3].averageScore").value(25.00));
+        call("/api/v1/seasons/2019/summary")
+                .andExpect(jsonPath("$.data.highestIndividualScore.player.id").value(rohit))
+                .andExpect(jsonPath("$.data.highestIndividualScore.runs").value(13))
+                .andExpect(jsonPath("$.data.highestIndividualScore.balls").value(6))
+                .andExpect(jsonPath("$.data.highestIndividualScore.notOut").value(false))
+                .andExpect(jsonPath("$.data.highestIndividualScore.opponent.code").value("CSK"));
+    }
+
+    @Test
+    void teamListCarriesRecordsAndSplits() throws Exception {
+        call("/api/v1/teams")
+                .andExpect(jsonPath("$.data[?(@.code == 'MI')].record.played").value(2))
+                .andExpect(jsonPath("$.data[?(@.code == 'MI')].record.won").value(2))
+                .andExpect(jsonPath("$.data[?(@.code == 'MI')].latestSeason.season").value(2019))
+                .andExpect(jsonPath("$.data[?(@.code == 'CSK')].latestSeason.season").value(2023));
+        call("/api/v1/teams/" + mi + "/stats?season=2019").andExpect(jsonPath("$.data.highestScore").value(30));
+        call("/api/v1/teams/" + mi + "/opponents?season=2019")
+                .andExpect(jsonPath("$.data[0].opponent.code").value("CSK"))
+                .andExpect(jsonPath("$.data[0].stats.overall.won").value(1));
+        call("/api/v1/teams/" + mi + "/venues?season=2019")
+                .andExpect(jsonPath("$.data[0].venue.id").value(wankhede))
+                .andExpect(jsonPath("$.data[0].stats.battingFirst.won").value(1));
+    }
+
+    @Test
+    void playerListIsScopedSortedAndPaged() throws Exception {
+        call("/api/v1/players?season=2019&team=" + mi + "&sort=runs&size=2")
+                .andExpect(jsonPath("$.data[0].id").value(rohit))
+                .andExpect(jsonPath("$.data[0].team.code").value("MI"))
+                .andExpect(jsonPath("$.data[0].runs").value(13))
+                .andExpect(jsonPath("$.data[0].strikeRate").value(216.67))
+                .andExpect(jsonPath("$.pagination.totalElements").value(5))
+                .andExpect(jsonPath("$.pagination.totalPages").value(3));
+        call("/api/v1/players?season=2019&discipline=bowling&sort=wickets")
+                .andExpect(jsonPath("$.data[*].name", contains("DL Chahar", "Imran Tahir", "JJ Bumrah", "KA Pollard")))
+                .andExpect(jsonPath("$.data[0].economy").value(12.00));
+        call("/api/v1/players?season=2019&page=9").andExpect(jsonPath("$.pagination.totalElements").value(10));
+        mvc.perform(get("/api/v1/players?team=999")).andExpect(status().isUnprocessableEntity());
+    }
+
+    @Test
+    void phaseBoundariesAndMaidens() throws Exception {
+        call("/api/v1/players/" + rohit + "/phases?season=2019")
+                .andExpect(jsonPath("$.data.batting[0].fours").value(1))
+                .andExpect(jsonPath("$.data.batting[0].sixes").value(1))
+                .andExpect(jsonPath("$.data.batting[0].boundaryPercentage").value(33.33));
+        call("/api/v1/matches/" + match2019 + "/scorecard")
+                .andExpect(jsonPath("$.data.innings[0].bowling[0].maidens").value(0));
+    }
+
+    @Test
+    void venueSeasonsAndScoreDistribution() throws Exception {
+        call("/api/v1/venues/" + wankhede + "/seasons")
+                .andExpect(jsonPath("$.data[0].season").value(2019))
+                .andExpect(jsonPath("$.data[0].stats.highestScore").value(30));
+        call("/api/v1/venues/" + wankhede + "/score-distribution")
+                .andExpect(jsonPath("$.data.length()").value(7))
+                .andExpect(jsonPath("$.data[0].to").value(119))
+                .andExpect(jsonPath("$.data[0].innings").value(1))
+                .andExpect(jsonPath("$.data[6].from").value(220));
+    }
+
     @Test
     void playerSearchIsPagedAndMatchesAnyName() throws Exception {
         call("/api/v1/players?search=sharma")

@@ -28,6 +28,10 @@ public class LeaderboardQueries {
         final String value;
         final String direction;
         final int defaultMinBalls;
+
+        public int defaultMinimumBalls() {
+            return defaultMinBalls;
+        }
         final int defaultMinDismissals;
 
         BattingMetric(String value, String direction, int defaultMinBalls, int defaultMinDismissals) {
@@ -49,6 +53,10 @@ public class LeaderboardQueries {
         final String value;
         final String direction;
         final int defaultMinLegalBalls;
+
+        public int defaultMinimumLegalBalls() {
+            return defaultMinLegalBalls;
+        }
         final int defaultMinWickets;
 
         BowlingMetric(String value, String direction, int defaultMinLegalBalls, int defaultMinWickets) {

@@ -1,0 +1,6 @@
+# Production profile: no interactive API documentation; everything else as in application.yml.
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

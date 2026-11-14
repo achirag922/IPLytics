@@ -85,7 +85,7 @@ balls in the later phases.
 | Win % | Wins × 100 ÷ (played − no results). |
 | Batting first | The batting team of innings 1. |
 | Toss win → match win % | Matches where the toss winner also won × 100 ÷ matches with a result. |
-| Net run rate | (Runs scored ÷ overs faced) − (runs conceded ÷ overs bowled). Overs are real (balls ÷ 6). A side bowled out is charged its full quota of overs (20, or the revised DLS quota). Super overs are excluded. *Not implemented yet.* |
+| Net run rate | (Runs scored ÷ overs faced) − (runs conceded ÷ overs bowled). Overs are real (balls ÷ 6). A side bowled out is charged its full quota of overs (20, or the revised DLS quota). Super overs are excluded. See §6b. |
 | Batted first / chased | Batted in innings 1 / innings 2 of the match. |
 | Average score / conceded | Runs scored (conceded) in regular innings ÷ number of those innings. |
 | Home / away | Home when the venue's city equals the franchise's curated home city; everything else is away. Approximate for second home grounds, relocations and neutral seasons (docs/analytics.md §7). |
@@ -99,6 +99,26 @@ balls in the later phases.
 | Average first-innings score | Mean first-innings total over matches with a result and no D/L adjustment. |
 | Highest total / lowest completed total | Max regular-innings total / min total of an innings that was all out or used its full scheduled overs. |
 | Average run rate | All regular-innings runs × 6 ÷ legal balls at the venue. |
+
+## 6b. Points table (`GET /api/v1/seasons/{year}/points-table`)
+
+| Item | Rule |
+|---|---|
+| Matches counted | League stage only (`stage = 'League'`); playoffs are not in the table. |
+| Points | 2 × wins + 1 × no results. A tie decided by a super over is a win for the super-over winner. |
+| Net run rate | Runs for ÷ (balls faced ÷ 6) − runs against ÷ (balls bowled ÷ 6), rounded half-up to 3 places (`CricketMetrics.netRunRate`). Regular innings only (super overs never count). |
+| All out | A side bowled out is charged its full allotted overs (scheduled overs, or the revised D/L overs for the chasing side) instead of the balls it faced. |
+| D/L results | The side batting first is credited with target − 1 runs off the chasing side's allotted (revised) overs. |
+| No results | Count as matches and 1 point, but not towards NRR. |
+| Order | Points desc, NRR desc (null last), wins desc, name. |
+
+These rules are the standard IPL ones. Checked against the published tables, NRR matches to 3 places for 2023 and
+2024. Known differences come from the source, not the formula:
+
+- **Matches abandoned without a ball bowled are not in Cricsheet**, so their no-result point is missing (2024: KKR
+  shows 18 points from 12 matches; the official table has 20 from 14). NRR is unaffected.
+- **2008**: four sides differ by up to 0.006 in NRR (e.g. MI 0.575 vs 0.570 published), from rain-reduced matches
+  whose official revised overs are not described exactly by the source.
 
 ## 7. Leaderboard qualification (defaults, overridable via API parameters)
 

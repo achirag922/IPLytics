@@ -22,12 +22,41 @@ spring:
 
 server:
   port: ${SERVER_PORT:8080}
+  error:
+    include-stacktrace: never
+    include-exception: false
+    include-message: never
+    whitelabel:
+      enabled: false
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,metrics # never env, configprops, beans, heapdump, loggers
+  endpoint:
+    health:
+      show-details: never
+      show-components: never
+  info:
+    build:
+      enabled: true
+    java:
+      enabled: true
+    env:
+      enabled: false
+    os:
+      enabled: false
+
+iplytics:
+  cors:
+    # Comma-separated browser origins allowed to call /api/** (the Vite dev server by default).
+    allowed-origins: ${IPLYTICS_CORS_ALLOWED_ORIGINS:http://localhost:5173}
+
+logging:
+  pattern:
+    # requestId comes from RequestLoggingFilter (X-Request-Id) for API requests.
+    level: "%5p [%X{requestId:-}]"
 
 springdoc:
   paths-to-match: /api/**

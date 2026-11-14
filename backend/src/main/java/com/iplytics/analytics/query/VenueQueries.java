@@ -32,7 +32,10 @@ public class VenueQueries {
                    min(i.total_runs) filter (where i.wickets = 10 or i.legal_balls >= coalesce(m.scheduled_overs, 20) * 6)
                        as lowest_completed_total,
                    coalesce(sum(i.total_runs), 0) as runs,
-                   coalesce(sum(i.legal_balls), 0) as legal_balls
+                   coalesce(sum(i.legal_balls), 0) as legal_balls,
+                   count(*) as innings,
+                   coalesce(sum(i.wickets), 0) as wickets,
+                   coalesce(sum(i.fours + i.sixes), 0) as boundaries
               from analytics.innings_summary i
               join core.match m on m.id = i.match_id
              where i.venue_id = :venueId and not i.is_super_over""";
@@ -52,11 +55,14 @@ public class VenueQueries {
         long chasingWins = number(matches, "chasing_wins");
         long runs = number(innings, "runs");
         long legalBalls = number(innings, "legal_balls");
+        long inningsCount = number(innings, "innings");
         return new VenueStats(number(matches, "matches"), decisive, battingFirstWins, chasingWins,
                 CricketMetrics.percentage(battingFirstWins, decisive), CricketMetrics.percentage(chasingWins, decisive),
                 CricketMetrics.mean(number(matches, "first_innings_runs"), number(matches, "first_innings")),
                 (Integer) innings.get("highest_total"), (Integer) innings.get("lowest_completed_total"),
-                runs, legalBalls, CricketMetrics.runRate(runs, legalBalls));
+                runs, legalBalls, CricketMetrics.runRate(runs, legalBalls), inningsCount,
+                CricketMetrics.mean(number(innings, "wickets"), inningsCount),
+                CricketMetrics.mean(number(innings, "boundaries"), inningsCount));
     }
 
     private static String seasons(String column, AnalyticsFilter filter, MapSqlParameterSource params) {
@@ -81,10 +87,13 @@ public class VenueQueries {
      * @param averageFirstInningsScore over matches with a result and no D/L adjustment
      * @param lowestCompletedTotal     lowest total of an innings that was all out or used its full scheduled overs
      * @param averageRunRate           all regular-innings runs per 6 legal balls at the venue
+     * @param wicketsPerInnings        dismissals per regular innings
+     * @param boundariesPerInnings     fours plus sixes (not run fours) per regular innings
      */
     public record VenueStats(long matches, long decisiveMatches, long battingFirstWins, long chasingWins,
                              BigDecimal battingFirstWinPercentage, BigDecimal chaseSuccessPercentage,
                              BigDecimal averageFirstInningsScore, Integer highestTotal, Integer lowestCompletedTotal,
-                             long runs, long legalBalls, BigDecimal averageRunRate) {
+                             long runs, long legalBalls, BigDecimal averageRunRate, long innings,
+                             BigDecimal wicketsPerInnings, BigDecimal boundariesPerInnings) {
     }
 }

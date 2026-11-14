@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.iplytics.common.web.DataVersionService;
 import com.iplytics.system.service.SystemService;
 import com.iplytics.system.service.SystemStatus;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,9 @@ class SystemControllerTest {
 
     @Autowired
     private MockMvc mvc;
+
+    @MockitoBean
+    private DataVersionService dataVersions;
 
     @MockitoBean
     private SystemService systemService;

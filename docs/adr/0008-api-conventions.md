@@ -1,6 +1,6 @@
 # 0008 REST API conventions
 
-**Status:** Accepted (V0)
+**Status:** Accepted (V0). Amended by 0012 (envelope, filter names, actuator).
 
 ## Decision
 - All endpoints live under `/api/v1`. A breaking change means `/api/v2`.

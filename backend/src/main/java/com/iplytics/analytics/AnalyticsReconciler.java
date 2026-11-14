@@ -102,9 +102,11 @@ public class AnalyticsReconciler {
                                                    or powerplay_balls + middle_balls + death_balls <> balls))
                     union all
                     select 'bowling ' || innings_id from analytics.bowling_innings
-                     where (is_super_over and powerplay_balls + middle_balls + death_balls > 0)
+                     where (is_super_over and powerplay_balls + middle_balls + death_balls
+                                              + powerplay_wickets + middle_wickets + death_wickets > 0)
                         or (not is_super_over and (powerplay_balls + middle_balls + death_balls <> legal_balls
-                                                   or powerplay_runs + middle_runs + death_runs <> runs_conceded))
+                                                   or powerplay_runs + middle_runs + death_runs <> runs_conceded
+                                                   or powerplay_wickets + middle_wickets + death_wickets <> wickets))
                     union all
                     select 'innings ' || innings_id from analytics.innings_summary
                      where (is_super_over and powerplay_runs + middle_runs + death_runs > 0)
@@ -114,6 +116,12 @@ public class AnalyticsReconciler {
                     select t.match_id || '/' || t.team_id from analytics.team_match_result t
                      where t.runs_for is distinct from (select s.total_runs from analytics.innings_summary s
                                                          where s.match_id = t.match_id and s.batting_team_id = t.team_id and not s.is_super_over)"""},
+            new String[] {"Every dismissal kind points at its wicket", """
+                    select innings_id || '/' || player_id from analytics.batting_innings
+                     where (dismissal_kind is null) <> (dismissal_wicket_id is null)
+                        or (dismissal_wicket_id is not null
+                            and not exists (select 1 from core.wicket w where w.id = dismissal_wicket_id
+                                                                        and w.player_out_id = player_id))"""},
             new String[] {"Each batting position is used once per innings", """
                     select innings_id || '/' || batting_position from analytics.batting_innings
                      group by innings_id, batting_position having count(*) > 1"""});

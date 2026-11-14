@@ -2,7 +2,7 @@
 
 A full-stack platform for exploring Indian Premier League data: team, player, match, venue and season analytics, head-to-heads, player comparisons and advanced batting and bowling analysis.
 
-> **Status: V1.3 (analytics layer).** Cricsheet IPL 2008–2026 data flows from source to staging, into a normalized `core` schema, and on to a reconciled `analytics` layer with reusable query classes. REST APIs and UI pages come next. See the [roadmap](#roadmap).
+> **Status: V1.4 (REST API).** Cricsheet IPL 2008–2026 data flows from source to staging, into a normalized `core` schema and a reconciled `analytics` layer, and is served by a documented read-only REST API under `/api/v1`. UI pages come next. See the [roadmap](#roadmap).
 
 ## Tech stack
 
@@ -45,7 +45,8 @@ If port 5432 is already taken, set `DB_PORT` (for example `DB_PORT=5434`) both i
 | http://localhost:8080/swagger-ui.html | Swagger UI |
 | http://localhost:8080/v3/api-docs | OpenAPI document (JSON) |
 | http://localhost:8080/api/v1/system/status | App version + database schema version |
-| http://localhost:8080/actuator/health | Health (includes database) |
+| http://localhost:8080/actuator/health | Health (includes database; status only) |
+| http://localhost:8080/api/v1/seasons | REST API (see [docs/api.md](docs/api.md)) |
 
 Stop PostgreSQL with `docker compose down`. Add `-v` to also delete the data volume.
 
@@ -132,6 +133,24 @@ select ingestion_run_id, source_row_number, reason_code, reason, raw_data
 | `ingest.max-rejected-rows` | `1000` | A file with more invalid rows than this fails as a whole |
 | `ingest.stale-run-timeout` | `1h` | Runs still RUNNING after this long (e.g. a killed process) are marked FAILED on the next run |
 
+## REST API
+
+Read-only, under `/api/v1`, documented in Swagger UI and [docs/api.md](docs/api.md). The data must have been
+converted, ingested, transformed and refreshed (sections above). A few requests to try:
+
+```bash
+curl "http://localhost:8080/api/v1/seasons/2024/points-table"
+curl "http://localhost:8080/api/v1/leaderboards/batting?metric=strikeRate&seasonFrom=2020&minimumBalls=500&limit=5"
+curl "http://localhost:8080/api/v1/players?search=kohli"
+curl "http://localhost:8080/api/v1/matches?season=2023&stage=Final"
+curl "http://localhost:8080/api/v1/head-to-head?team1=2&team2=4"   # team ids from /api/v1/teams
+```
+
+Responses are `{data, meta}` (collections add `pagination`); errors are RFC 9457 problem details; responses carry
+an ETag, and `If-None-Match` returns `304` while the data is unchanged. `IPLYTICS_CORS_ALLOWED_ORIGINS` sets the
+browser origins allowed to call the API (default `http://localhost:5173`). Run with `--spring.profiles.active=prod`
+to turn off Swagger UI and the OpenAPI endpoint.
+
 ## Tests and verification
 
 ```bash
@@ -162,6 +181,7 @@ docs/adr/           Architecture Decision Records
 - [Data source and expected CSV format](docs/data-source.md)
 - [Metric definitions](docs/metrics.md)
 - [Analytics layer](docs/analytics.md)
+- [REST API](docs/api.md)
 - [Architecture decisions](docs/adr/README.md)
 
 ## Roadmap
@@ -172,6 +192,7 @@ docs/adr/           Architecture Decision Records
 | **V1.1** ✅ | Dataset and staging layer: Cricsheet JSON → converter → CSV → validated staging tables, run audit, rejected rows |
 | **V1.2** ✅ | Core data model: seasons, franchises, venues, players (Cricsheet ids), matches, innings, deliveries, wickets, playing lists; idempotent set-based transform with reconciliation |
 | **V1.3** ✅ | Analytics layer: batting/bowling/innings/team-match views, formula functions mirrored by CricketMetrics, phases, concurrent audited refresh, team/player/venue/head-to-head/leaderboard queries |
-| V1.4+ | REST APIs and UI pages; then hardening |
+| **V1.4** ✅ | REST API: seasons, points tables, teams, venues, players, matches with scorecards and progression, head-to-head, comparisons, matchups, leaderboards; OpenAPI contract, problem-detail errors, ETag caching |
+| V1.5+ | UI pages; then hardening |
 | V2 | Incremental ETL pipeline, data-quality reports |
 | V3+ | Redis, Kafka (live data), AI insights, predictions |

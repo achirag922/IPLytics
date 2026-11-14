@@ -76,6 +76,26 @@ public final class CricketMetrics {
         return ratio(total, count);
     }
 
+    /**
+     * Net run rate = runs scored per over faced − runs conceded per over bowled, with overs as real numbers
+     * (balls ÷ 6), rounded to 3 decimals half-up. Inputs must already apply the all-out and D/L rules
+     * (docs/metrics.md 6b). Null when either side has no balls.
+     */
+    public static BigDecimal netRunRate(long runsFor, long ballsFaced, long runsAgainst, long ballsBowled) {
+        if (ballsFaced == 0 || ballsBowled == 0) {
+            return null;
+        }
+        java.math.MathContext precision = java.math.MathContext.DECIMAL128;
+        BigDecimal scored = BigDecimal.valueOf(6 * runsFor).divide(BigDecimal.valueOf(ballsFaced), precision);
+        BigDecimal conceded = BigDecimal.valueOf(6 * runsAgainst).divide(BigDecimal.valueOf(ballsBowled), precision);
+        return scored.subtract(conceded).setScale(3, ROUNDING);
+    }
+
+    /** IPL points: 2 per win (including a super-over win), 1 per no result. */
+    public static long points(long wins, long noResults) {
+        return 2 * wins + noResults;
+    }
+
     /** Overs notation for display: 22 legal balls is {@code "3.4"}. SQL: {@code analytics.overs}. */
     public static String overs(long legalBalls) {
         return (legalBalls / 6) + "." + (legalBalls % 6);

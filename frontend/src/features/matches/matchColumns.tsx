@@ -25,8 +25,8 @@ export const matchColumns: Column<MatchSummary>[] = [
     ),
   },
   { key: 'season', header: 'Season', cell: (m) => m.season },
-  { key: 'team1', header: 'Team 1', cell: (m) => <TeamLink team={m.team1?.team} short /> },
-  { key: 'team2', header: 'Team 2', cell: (m) => <TeamLink team={m.team2?.team} short /> },
+  { key: 'team1', header: 'Team 1', cell: (m) => <TeamLink team={m.team1?.team} short logo /> },
+  { key: 'team2', header: 'Team 2', cell: (m) => <TeamLink team={m.team2?.team} short logo /> },
   { key: 'winner', header: 'Winner', cell: (m) => (m.winner ? <TeamLink team={m.winner} short /> : '–') },
   {
     key: 'venue',

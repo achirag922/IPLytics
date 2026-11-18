@@ -19,7 +19,7 @@ const columns: Column<Season>[] = [
       </Link>
     ),
   },
-  { key: 'champion', header: 'Champion', cell: (s) => <TeamLink team={s.champion} /> },
+  { key: 'champion', header: 'Champion', cell: (s) => <TeamLink team={s.champion} logo /> },
   { key: 'm', header: 'Matches', align: 'right', cell: (s) => formatInteger(s.matches) },
   { key: 'r', header: 'Runs', align: 'right', cell: (s) => formatInteger(s.runs) },
   { key: 'w', header: 'Wickets', align: 'right', cell: (s) => formatInteger(s.wickets) },

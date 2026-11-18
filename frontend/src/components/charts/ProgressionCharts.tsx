@@ -1,5 +1,5 @@
 import { EmptyState } from '@/components/states/EmptyState';
-import { axisStyle, baseOption, SERIES_COLORS, useChartOption } from './chartTheme';
+import { axisStyle, baseOption, legendStyle, SERIES_COLORS, useChartOption } from './chartTheme';
 import { EChart } from './EChart';
 
 /** One innings of the V1.4 progression API, already aggregated per over by the backend. */
@@ -25,7 +25,7 @@ export function WormChart({ innings, ariaLabel, height = 340 }: ProgressionChart
     (theme) => ({
       ...baseOption(theme, ariaLabel),
       tooltip: { ...(baseOption(theme, ariaLabel).tooltip as object), trigger: 'axis' },
-      legend: { top: 0, textStyle: { color: theme.text } },
+      legend: { top: 0, ...legendStyle(theme) },
       grid: { left: 8, right: 16, top: 36, bottom: 32 },
       xAxis: {
         type: 'value',
@@ -83,7 +83,7 @@ export function ManhattanChart({ innings, ariaLabel, height = 340 }: Progression
       return {
         ...baseOption(theme, ariaLabel),
         tooltip: { ...(baseOption(theme, ariaLabel).tooltip as object), trigger: 'axis' },
-        legend: { top: 0, textStyle: { color: theme.text } },
+        legend: { top: 0, ...legendStyle(theme) },
         grid: { left: 8, right: 16, top: 36, bottom: 32 },
         xAxis: {
           type: 'category',

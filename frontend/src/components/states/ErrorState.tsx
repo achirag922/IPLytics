@@ -15,11 +15,16 @@ export function ErrorState({ error, onRetry, className }: ErrorStateProps) {
     <div
       role="alert"
       className={cn(
-        'flex flex-col items-center justify-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-6 py-8 text-center',
+        'flex flex-col items-center justify-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-6 py-8 text-center',
         className,
       )}
     >
-      <AlertTriangle aria-hidden="true" className="size-7 text-destructive" />
+      <span
+        aria-hidden="true"
+        className="mb-1 grid size-12 place-items-center rounded-full bg-destructive/10"
+      >
+        <AlertTriangle className="size-6 text-destructive" />
+      </span>
       <p className="font-medium">Unable to load data.</p>
       <p className="max-w-md text-sm text-muted-foreground">{describeError(error)}</p>
       {onRetry && (

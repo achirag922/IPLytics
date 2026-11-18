@@ -4,6 +4,7 @@ import { VenueLink } from '@/components/cards/EntityLinks';
 import { FilterBar } from '@/components/filters';
 import { SearchFilter } from '@/components/filters/SearchFilter';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { CardGrid, VenueCard } from '@/components/cards/EntityCards';
 import { TableSkeleton } from '@/components/loading/Skeletons';
 import { QueryContent } from '@/components/states/QueryContent';
 import { DataTable, type Column } from '@/components/tables/DataTable';
@@ -45,6 +46,19 @@ export function VenuesPage() {
           onChange={(v) => url.update({ search: v })}
         />
       </FilterBar>
+      {!search && venues.data && venues.data.length > 0 && (
+        <section aria-label="Busiest grounds" className="mb-6 space-y-3">
+          <h2 className="text-lg font-semibold tracking-tight">Busiest grounds</h2>
+          <CardGrid>
+            {[...venues.data]
+              .sort((a, b) => b.matches - a.matches)
+              .slice(0, 4)
+              .map((v) => (
+                <VenueCard key={v.id} venue={v} />
+              ))}
+          </CardGrid>
+        </section>
+      )}
       <Card>
         <CardContent className="pt-4 sm:pt-5">
           <QueryContent

@@ -6,7 +6,7 @@ import { envelope, problem, requestsTo, server } from '@/test/server';
 
 describe('Matches page', () => {
   it('lists matches with result and score line', async () => {
-    renderApp('/matches');
+    renderApp('/matches?view=table');
     const table = await screen.findByRole('table', { name: 'Matches matching the filters' });
     expect(within(table).getByRole('link', { name: '10 Apr 2019' })).toBeInTheDocument();
     expect(within(table).getAllByText('Mumbai Indians won by 10 runs')).toHaveLength(2);
@@ -45,7 +45,10 @@ describe('Matches page', () => {
 
   it('navigates to the scorecard', async () => {
     const { user, location } = renderApp('/matches');
-    await user.click((await screen.findAllByRole('link', { name: '10 Apr 2019' }))[0] as HTMLElement);
+    // Cards view (the default): each card links to its match.
+    await user.click(
+      await screen.findByRole('link', { name: /Mumbai Indians v Chennai Super Kings, 10 Apr 2019/ }),
+    );
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Mumbai Indians v Chennai Super Kings' }),
     ).toBeInTheDocument();

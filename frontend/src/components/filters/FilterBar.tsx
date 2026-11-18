@@ -26,7 +26,10 @@ export function FilterBar({
       role="search"
       aria-label={label}
       onSubmit={(event) => event.preventDefault()}
-      className={cn('mb-6 flex flex-wrap items-end gap-3 rounded-lg border bg-card p-3 shadow-sm', className)}
+      className={cn(
+        'mb-6 flex flex-wrap items-end gap-3 rounded-xl border bg-card/80 p-3 shadow-sm backdrop-blur',
+        className,
+      )}
     >
       {children}
       {onReset && (

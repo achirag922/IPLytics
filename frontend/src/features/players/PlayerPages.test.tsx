@@ -75,8 +75,10 @@ describe('Player detail', () => {
     renderApp('/players/346');
     expect(await screen.findByRole('heading', { level: 1, name: 'RG Sharma' })).toBeInTheDocument();
     expect(screen.getByText(/270 matches/)).toBeInTheDocument();
-    expect(await screen.findByText('105*')).toBeInTheDocument();
-    expect(screen.getByText('4/18')).toBeInTheDocument();
+    // Career figures appear in the hero and again in the overview tab.
+    expect((await screen.findAllByText('105*')).length).toBe(2);
+    expect(screen.getAllByText('Best 4/18').length).toBe(1);
+    expect(screen.getAllByText('4/18').length).toBeGreaterThan(0);
   });
 
   it('shows batting with filters from the URL and charts', async () => {

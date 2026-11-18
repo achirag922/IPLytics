@@ -2,7 +2,9 @@ import { Outlet } from 'react-router';
 import type { MatchContext } from '@/features/detailContext';
 import { ApiError } from '@/api/client';
 import { PlayerLink, TeamLink, VenueLink } from '@/components/cards/EntityLinks';
-import { PageHeader } from '@/components/layout/PageHeader';
+import { EntityHero } from '@/components/layout/EntityHero';
+import { TeamLogo } from '@/components/media/TeamLogo';
+import { teamBranding } from '@/config/media/teamBranding';
 import { TabNav } from '@/components/layout/TabNav';
 import { PageSkeleton } from '@/components/loading/Skeletons';
 import { ErrorState } from '@/components/states/ErrorState';
@@ -44,22 +46,43 @@ export function MatchDetailPage() {
   const m = match.data;
   const t1 = m.team1?.nameAtTheTime ?? m.team1?.team?.name;
   const t2 = m.team2?.nameAtTheTime ?? m.team2?.team?.name;
+  const winnerCode = m.winner?.code;
   return (
     <>
-      <PageHeader
+      <EntityHero
         breadcrumbs={[
           { label: 'Matches', to: '/matches' },
           { label: String(m.season), to: `/seasons/${m.season}` },
           { label: `${m.team1?.team?.code} v ${m.team2?.team?.code}` },
         ]}
-        title={`${t1} v ${t2}`}
-        description={
-          <span className="flex flex-wrap items-center gap-2">
-            <span className="font-medium text-foreground">{m.resultText}</span>
-            {m.stage && <Badge variant="outline">{m.stage}</Badge>}
-            {m.method && <Badge variant="secondary">{m.method}</Badge>}
+        accent={teamBranding(winnerCode ?? m.team1?.team?.code)}
+        media={
+          <span className="flex items-center -space-x-3">
+            <TeamLogo team={m.team1?.team} size="lg" />
+            <TeamLogo team={m.team2?.team} size="lg" />
           </span>
         }
+        eyebrow={
+          <>
+            IPL {m.season}
+            {m.matchNumber ? ` · Match ${m.matchNumber}` : ''} · {formatDate(m.date)}
+          </>
+        }
+        title={`${t1} v ${t2}`}
+        subtitle={<span className="font-semibold text-primary">{m.resultText}</span>}
+        badges={
+          (m.stage || m.method) && (
+            <>
+              {m.stage && <Badge variant="outline">{m.stage}</Badge>}
+              {m.method && <Badge variant="secondary">{m.method}</Badge>}
+            </>
+          )
+        }
+        stats={(m.innings ?? []).map((i) => ({
+          label: `${i.team?.code ?? ''}${i.superOver ? ' super over' : ''}`,
+          value: `${i.runs}/${i.wickets}`,
+          hint: i.overs ? `${i.overs} overs` : undefined,
+        }))}
       />
       <Card className="mb-6">
         <CardContent className="pt-4 sm:pt-5">

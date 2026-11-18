@@ -67,7 +67,7 @@ export function SeasonDetailPage() {
           s.champion ? (
             <span className="flex items-center gap-1.5">
               <Trophy aria-hidden="true" className="size-4 text-amber-500" /> Champion:{' '}
-              <TeamLink team={s.champion} />
+              <TeamLink team={s.champion} logo />
             </span>
           ) : undefined
         }

@@ -14,11 +14,13 @@ export function EmptyState({ title = 'No data available', description, action, c
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-6 py-10 text-center',
+        'flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed bg-muted/20 px-6 py-12 text-center',
         className,
       )}
     >
-      <SearchX aria-hidden="true" className="size-8 text-muted-foreground" />
+      <span aria-hidden="true" className="mb-1 grid size-12 place-items-center rounded-full bg-muted">
+        <SearchX className="size-6 text-muted-foreground" />
+      </span>
       <p className="font-medium">{title}</p>
       {description && <p className="max-w-md text-sm text-muted-foreground">{description}</p>}
       {action}

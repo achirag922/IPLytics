@@ -67,6 +67,15 @@ public class TeamQueries {
         return grouped("t.opponent_team_id", teamId, filter);
     }
 
+    /** Every franchise's record at one venue (key = team id), most wins first. */
+    public List<Grouped> atVenue(int venueId, AnalyticsFilter filter) {
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        String sql = "select t.team_id as group_key, " + AGGREGATES + " from analytics.team_match_result t where true"
+                + filter.venue(venueId).conditions("t", false, params)
+                + " group by t.team_id order by count(*) filter (where t.won) desc, count(*) desc, t.team_id";
+        return jdbc.query(sql, params, (rs, n) -> new Grouped(rs.getInt("group_key"), map(rs)));
+    }
+
     /** All-time records of every franchise in one grouped query (key = team id). */
     public Map<Integer, TeamStats> allTeams() {
         Map<Integer, TeamStats> result = new LinkedHashMap<>();

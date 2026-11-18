@@ -33,6 +33,7 @@ export const queryKeys = {
   leaderboards: (discipline: string, params: object) => ['leaderboards', discipline, params] as const,
   headToHead: (params: object) => ['head-to-head', params] as const,
   matchup: (params: object) => ['matchups', params] as const,
+  insights: (kind: string, params: object) => ['insights', kind, params] as const,
 };
 
 /** IPL data only changes when an ingestion runs, so it stays fresh for a long time. */

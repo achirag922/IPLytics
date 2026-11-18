@@ -671,3 +671,200 @@ export const matchup: S['MatchupDto'] = {
   dotBallPercentage: 36,
   boundaryPercentage: 22,
 };
+
+// ---- V1.6 insights -------------------------------------------------------------------------------------------
+
+const tossRow = (matches: number, wins: number): S['TossRowDto'] => ({
+  matches,
+  decided: matches,
+  tossWinnerWins: wins,
+  tossWinnerWinPercentage: matches ? Math.round((wins / matches) * 10000) / 100 : undefined,
+  choseToBatFirst: Math.floor(matches / 3),
+});
+
+export const tossInsights = (team?: S['TeamRef']): S['TossInsightsDto'] => ({
+  overall: tossRow(120, 63),
+  byDecision: [
+    { decision: 'bat', result: tossRow(40, 18) },
+    { decision: 'field', result: tossRow(80, 45) },
+  ],
+  bySeason: [
+    { season: 2025, result: tossRow(60, 30) },
+    { season: 2026, result: tossRow(60, 33) },
+  ],
+  team: team && {
+    team,
+    matches: 28,
+    tossesWon: 15,
+    tossWinPercentage: 53.57,
+    choseToBat: 4,
+    choseToField: 11,
+    decidedAfterTossWin: 15,
+    winsAfterTossWin: 9,
+    winPercentageAfterTossWin: 60,
+    decidedAfterTossLoss: 13,
+    winsAfterTossLoss: 6,
+    winPercentageAfterTossLoss: 46.15,
+  },
+});
+
+const battingFirstRow = (decisive: number, first: number): S['BattingFirstRowDto'] => ({
+  decisiveMatches: decisive,
+  battingFirstWins: first,
+  chasingWins: decisive - first,
+  battingFirstWinPercentage: Math.round((first / decisive) * 10000) / 100,
+  chasingWinPercentage: Math.round(((decisive - first) / decisive) * 10000) / 100,
+  averageFirstInningsScore: 181.2,
+});
+
+export const battingFirstInsights: S['BattingFirstInsightsDto'] = {
+  overall: battingFirstRow(118, 52),
+  bySeason: [
+    { season: 2025, result: battingFirstRow(58, 25) },
+    { season: 2026, result: battingFirstRow(60, 27) },
+  ],
+  byTarget: [
+    { to: 149, matches: 10, chasedSuccessfully: 8, successPercentage: 80 },
+    { from: 150, to: 169, matches: 20, chasedSuccessfully: 13, successPercentage: 65 },
+    { from: 170, to: 189, matches: 30, chasedSuccessfully: 15, successPercentage: 50 },
+    { from: 190, to: 209, matches: 30, chasedSuccessfully: 10, successPercentage: 33.33 },
+    { from: 210, matches: 28, chasedSuccessfully: 6, successPercentage: 21.43 },
+  ],
+};
+
+const phaseRow = (
+  phase: NonNullable<S['PhaseRowDto']['phase']>,
+  runs: number,
+  balls: number,
+): S['PhaseRowDto'] => ({
+  phase,
+  innings: 14,
+  runs,
+  legalBalls: balls,
+  overs: `${Math.floor(balls / 6)}.${balls % 6}`,
+  runRate: Math.round((runs * 600) / balls) / 100,
+  wickets: 20,
+  wicketsPerInnings: 1.43,
+  runsPerInnings: Math.round((runs / 14) * 100) / 100,
+  fours: 70,
+  sixes: 30,
+  boundaryPercentage: 19.84,
+  dotBallPercentage: 38.1,
+});
+
+export const phaseInsights = (withBowling: boolean): S['PhaseInsightsDto'] => ({
+  batting: [phaseRow('powerplay', 760, 504), phaseRow('middle', 1150, 756), phaseRow('death', 640, 340)],
+  bowling: withBowling
+    ? [phaseRow('powerplay', 700, 504), phaseRow('middle', 1200, 756), phaseRow('death', 660, 345)]
+    : undefined,
+  bySeason: [
+    { season: 2025, powerplayRunRate: 9.1, middleRunRate: 8.8, deathRunRate: 11.2 },
+    { season: 2026, powerplayRunRate: 9.5, middleRunRate: 9.0, deathRunRate: 11.6 },
+  ],
+});
+
+const seasonInsight = (season: number, averageScore: number): S['SeasonInsightDto'] => ({
+  season,
+  matches: 70,
+  runs: 25000,
+  averageScore,
+  runRate: 9.4,
+  foursPerMatch: 30.1,
+  sixesPerMatch: 18.2,
+  wicketsPerMatch: 12.1,
+  averageFirstInningsScore: averageScore + 5,
+  battingFirstWinPercentage: 45,
+  tossWinnerWinPercentage: 51,
+  powerplayRunRate: 9.2,
+  middleRunRate: 8.9,
+  deathRunRate: 11.3,
+  highestScore: 262,
+  champion: season === 2026 ? MI : CSK,
+});
+
+export const seasonComparison = (years: number[]): S['SeasonComparisonDto'] => ({
+  seasons: years.map((y) => seasonInsight(y, y === 2026 ? 182.4 : 175.5)),
+  change:
+    years.length >= 2
+      ? {
+          from: years[0] as number,
+          to: years[years.length - 1] as number,
+          averageScore: 6.9,
+          runRate: 0.4,
+          foursPerMatch: 1.1,
+          sixesPerMatch: 2.5,
+          wicketsPerMatch: -0.3,
+          averageFirstInningsScore: 6.9,
+          battingFirstWinPercentage: -3,
+          tossWinnerWinPercentage: 1,
+          powerplayRunRate: 0.4,
+          middleRunRate: 0.2,
+          deathRunRate: 0.4,
+        }
+      : undefined,
+});
+
+export const consistency: S['PlayerConsistencyDto'] = {
+  player: ROHIT,
+  batting: {
+    innings: 12,
+    average: 38.18,
+    medianScore: 31,
+    standardDeviation: 27.5,
+    coefficientOfVariation: 78.6,
+    thirtyPlusPercentage: 50,
+    fiftyPlusPercentage: 25,
+    underTenPercentage: 16.67,
+    scoreBands: [
+      { label: '0', innings: 1 },
+      { label: '1-9', innings: 1 },
+      { label: '10-29', innings: 4 },
+      { label: '30-49', innings: 3 },
+      { label: '50-99', innings: 2 },
+      { label: '100+', innings: 1 },
+    ],
+    recentInnings: [
+      {
+        matchId: 77,
+        date: '2026-05-20',
+        opponent: CSK,
+        runs: 75,
+        balls: 42,
+        notOut: true,
+        strikeRate: 178.57,
+      },
+      { matchId: 78, date: '2026-05-15', opponent: CSK, runs: 12, balls: 10, notOut: false, strikeRate: 120 },
+    ],
+  },
+  bowling: {
+    innings: 0,
+    recentInnings: [],
+  },
+};
+
+export const venueTeams: S['VenueTeamDto'][] = [
+  {
+    team: MI,
+    played: 99,
+    won: 59,
+    lost: 40,
+    noResult: 0,
+    winPercentage: 59.6,
+    averageScore: 169.19,
+    highestScore: 243,
+  },
+  {
+    team: CSK,
+    played: 20,
+    won: 9,
+    lost: 11,
+    noResult: 0,
+    winPercentage: 45,
+    averageScore: 165.2,
+    highestScore: 220,
+  },
+];
+
+export const headToHeadByVenue: S['VenueMeetingsDto'][] = [
+  { venue: WANKHEDE, matches: 12, team1Wins: 5, team2Wins: 7, ties: 0, noResults: 0 },
+];

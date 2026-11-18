@@ -26,6 +26,11 @@ public enum CricketPhase {
         return overNumber <= LAST_MIDDLE_OVER ? MIDDLE : DEATH;
     }
 
+    /** The phase named by {@code analytics.phase} (e.g. "powerplay"). */
+    public static CricketPhase fromSqlName(String name) {
+        return valueOf(name.toUpperCase(Locale.ROOT));
+    }
+
     /** The value used by SQL ({@code analytics.phase}). */
     public String sqlName() {
         return name().toLowerCase(Locale.ROOT);

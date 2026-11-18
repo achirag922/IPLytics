@@ -70,6 +70,28 @@ describe('frontend/backend contract', () => {
     expect(h2h.matches).toBeGreaterThan(0);
   });
 
+  it('V1.6 insights and consistency agree with the other endpoints', async () => {
+    const overview = await analyticsApi.overview();
+    const seasons = await seasonsApi.list();
+    const toss = await analyticsApi.tossInsights({});
+    expect(toss.overall?.matches).toBeLessThanOrEqual(overview.matches);
+    const chasing = await analyticsApi.battingFirstInsights({});
+    const overall = chasing.overall!;
+    expect(overall.battingFirstWins + overall.chasingWins).toBe(overall.decisiveMatches);
+    expect(chasing.byTarget).toHaveLength(5);
+    const phases = await analyticsApi.phaseInsights({});
+    expect(phases.batting?.map((p) => p.phase)).toEqual(['powerplay', 'middle', 'death']);
+    const totalRuns = seasons.reduce((sum, s) => sum + s.runs, 0);
+    // Phase runs add up to the season totals (both exclude super overs).
+    expect((phases.batting ?? []).reduce((sum, p) => sum + p.runs, 0)).toBe(totalRuns);
+    const years = seasons.map((s) => s.year).sort((a, b) => a - b);
+    const comparison = await analyticsApi.seasonComparison({ seasons: [years[0]!, years.at(-1)!] });
+    expect(comparison.change?.from).toBe(years[0]);
+    const top = (await playersApi.list({ size: 1, sort: 'runs' })).items[0]!;
+    const consistency = await playersApi.consistency(top.id, {});
+    expect(consistency.batting?.innings).toBe(top.battingInnings);
+  });
+
   it('renders the dashboard with live data', async () => {
     const overview = await analyticsApi.overview();
     renderApp('/');

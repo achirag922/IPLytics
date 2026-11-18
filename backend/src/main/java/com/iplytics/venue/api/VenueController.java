@@ -6,6 +6,7 @@ import com.iplytics.common.web.SeasonFilterParams;
 import com.iplytics.venue.api.VenueDtos.ScoreBandDto;
 import com.iplytics.venue.api.VenueDtos.VenueDto;
 import com.iplytics.venue.api.VenueDtos.VenueSeasonStatsDto;
+import com.iplytics.venue.api.VenueDtos.VenueTeamDto;
 import com.iplytics.venue.api.VenueDtos.VenueStatsDto;
 import com.iplytics.venue.service.VenueService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -57,6 +58,13 @@ public class VenueController {
     public ApiResponse<List<VenueSeasonStatsDto>> seasons(@PathVariable @Positive int id,
                                                           @ParameterObject @Valid SeasonFilterParams filter) {
         return ApiResponse.list(service.seasons(id, filter), meta.meta(filter.describe()));
+    }
+
+    @GetMapping("/{id}/teams")
+    @Operation(summary = "Franchise records at the venue", description = "Played, won, lost, win %, average and highest score of each franchise at the venue, most wins first.")
+    public ApiResponse<List<VenueTeamDto>> teams(@PathVariable @Positive int id,
+                                                 @ParameterObject @Valid SeasonFilterParams filter) {
+        return ApiResponse.list(service.teams(id, filter), meta.meta(filter.describe()));
     }
 
     @GetMapping("/{id}/score-distribution")

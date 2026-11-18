@@ -21,6 +21,8 @@ export interface ChartTheme {
   splitLine: string;
   tooltipBackground: string;
   tooltipBorder: string;
+  tooltipShadow: string;
+  pointerShadow: string;
 }
 
 const THEMES: Record<ResolvedTheme, ChartTheme> = {
@@ -31,6 +33,8 @@ const THEMES: Record<ResolvedTheme, ChartTheme> = {
     splitLine: '#e2e8f0',
     tooltipBackground: '#ffffff',
     tooltipBorder: '#e2e8f0',
+    tooltipShadow: '0 10px 28px rgba(15,23,42,0.16)',
+    pointerShadow: 'rgba(100,116,139,0.10)',
   },
   dark: {
     text: '#e2e8f0',
@@ -39,6 +43,8 @@ const THEMES: Record<ResolvedTheme, ChartTheme> = {
     splitLine: '#1e293b',
     tooltipBackground: '#0f172a',
     tooltipBorder: '#334155',
+    tooltipShadow: '0 10px 28px rgba(0,0,0,0.55)',
+    pointerShadow: 'rgba(148,163,184,0.10)',
   },
 };
 
@@ -57,10 +63,37 @@ export function baseOption(theme: ChartTheme, ariaLabel: string): EChartOption {
     tooltip: {
       backgroundColor: theme.tooltipBackground,
       borderColor: theme.tooltipBorder,
-      textStyle: { color: theme.text },
+      textStyle: { color: theme.text, fontSize: 12 },
       confine: true,
+      padding: [8, 12],
+      borderWidth: 1,
+      extraCssText: `border-radius:10px;box-shadow:${theme.tooltipShadow};`,
+      axisPointer: {
+        lineStyle: { color: theme.axisLine, type: 'dashed' },
+        shadowStyle: { color: theme.pointerShadow },
+      },
     },
-    animationDuration: 400,
+    toolbox: {
+      right: 0,
+      top: 0,
+      itemSize: 13,
+      feature: { saveAsImage: { title: 'Save as image', pixelRatio: 2 } },
+      iconStyle: { borderColor: theme.mutedText },
+    },
+    animationDuration: 500,
+    animationEasing: 'cubicOut',
+  };
+}
+
+/** Legend shared by every chart: rounded markers, muted text, generous spacing. */
+export function legendStyle(theme: ChartTheme) {
+  return {
+    icon: 'roundRect',
+    itemWidth: 12,
+    itemHeight: 8,
+    itemGap: 16,
+    textStyle: { color: theme.mutedText, fontSize: 12 },
+    inactiveColor: theme.axisLine,
   };
 }
 

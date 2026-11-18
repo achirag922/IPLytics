@@ -3,6 +3,7 @@ package com.iplytics.analytics.headtohead;
 import com.iplytics.analytics.headtohead.HeadToHeadDtos.HeadToHeadDto;
 import com.iplytics.analytics.headtohead.HeadToHeadDtos.RivalSideDto;
 import com.iplytics.analytics.headtohead.HeadToHeadDtos.SeasonMeetingsDto;
+import com.iplytics.analytics.headtohead.HeadToHeadDtos.VenueMeetingsDto;
 import com.iplytics.analytics.query.AnalyticsFilter;
 import com.iplytics.analytics.query.HeadToHeadQueries;
 import com.iplytics.analytics.query.HeadToHeadQueries.HeadToHead;
@@ -10,8 +11,10 @@ import com.iplytics.common.exception.ResourceNotFoundException;
 import com.iplytics.common.exception.UnprocessableRequestException;
 import com.iplytics.common.web.RefLookup;
 import com.iplytics.common.web.Refs.TeamRef;
+import com.iplytics.common.web.Refs.VenueRef;
 import com.iplytics.match.repository.MatchCriteria;
 import com.iplytics.match.service.MatchService;
+import java.util.Comparator;
 import java.util.Map;
 import org.springframework.stereotype.Service;
 
@@ -42,6 +45,7 @@ public class HeadToHeadService {
 
         AnalyticsFilter filter = AnalyticsFilter.all().seasons(seasonFrom, seasonTo).venue(venue);
         HeadToHead all = queries.overall(team1, team2, filter);
+        Map<Integer, VenueRef> venues = refs.venues();
         return new HeadToHeadDto(all.matches(), all.ties(), all.noResults(),
                 new RivalSideDto(teams.get(team1), all.teamAWins(), all.teamAWinsBattingFirst(), all.teamAWinsChasing(),
                         all.teamAAverageScore()),
@@ -50,6 +54,11 @@ public class HeadToHeadService {
                 queries.bySeason(team1, team2, filter).stream().map(g -> new SeasonMeetingsDto(g.key(),
                         g.headToHead().matches(), g.headToHead().teamAWins(), g.headToHead().teamBWins(),
                         g.headToHead().ties(), g.headToHead().noResults())).toList(),
+                queries.byVenue(team1, team2, filter).stream()
+                        .sorted(Comparator.comparingLong((HeadToHeadQueries.Grouped g) -> g.headToHead().matches()).reversed())
+                        .map(g -> new VenueMeetingsDto(venues.get(g.key()), g.headToHead().matches(),
+                                g.headToHead().teamAWins(), g.headToHead().teamBWins(), g.headToHead().ties(),
+                                g.headToHead().noResults())).toList(),
                 matches.list(MatchCriteria.between(team1, team2, seasonFrom, seasonTo, venue), 0, RECENT_MATCHES).items());
     }
 

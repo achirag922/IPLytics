@@ -41,6 +41,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/venues/{id}/teams": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Franchise records at the venue
+         * @description Played, won, lost, win %, average and highest score of each franchise at the venue, most wins first.
+         */
+        get: operations["teams"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/venues/{id}/stats": {
         parameters: {
             query?: never;
@@ -411,6 +431,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/players/{id}/consistency": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consistency and form
+         * @description How steady the player is: median score, spread (standard deviation, coefficient of variation), share of
+         *     30+ / 50+ / single-figure innings and a score distribution; for bowling, share of wicket-taking innings
+         *     and economy spread. Includes the last 10 innings of each. Filters as for the other player statistics.
+         */
+        get: operations["consistency"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/players/{id}/bowling": {
         parameters: {
             query?: never;
@@ -640,6 +682,90 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/insights/toss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Toss impact
+         * @description How often the toss winner wins, by decision and by season. With team, also the franchise's own toss
+         *     record. team and opponent select the matches they played (both: their meetings).
+         */
+        get: operations["toss"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/insights/seasons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Season comparison
+         * @description Season-level figures (scoring, boundaries, phases, toss and batting-first results) for a season range or
+         *     for a list of 2 to 10 seasons, with the change from the first to the last season returned.
+         */
+        get: operations["seasons_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/insights/phases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Phase scoring
+         * @description Powerplay, middle and death overs: run rate, wickets, boundary and dot-ball percentages, plus run rate
+         *     by season. With team: the team's batting and, separately, its bowling.
+         */
+        get: operations["phases_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/insights/batting-first": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Batting first vs chasing
+         * @description Results of the side batting first overall and by season, average first-innings score, and chase success
+         *     by target band (under 150, 150-169, 170-189, 190-209, 210 and over).
+         */
+        get: operations["battingFirst"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/head-to-head": {
         parameters: {
             query?: never;
@@ -727,6 +853,44 @@ export interface components {
             meta?: {
                 [key: string]: unknown;
             };
+        };
+        ApiResponseListVenueTeamDto: {
+            /** @description The resource or the collection of resources */
+            data?: components["schemas"]["VenueTeamDto"][];
+            /** @description Present on collections */
+            pagination?: components["schemas"]["Pagination"];
+            /** @description generatedAt, dataVersion, applied filters and endpoint-specific context */
+            meta?: {
+                [key: string]: unknown;
+            };
+        };
+        /** @description A franchise (renamed teams share one franchise) */
+        TeamRef: {
+            /**
+             * Format: int32
+             * @example 6
+             */
+            id: number;
+            /** @example MI */
+            code?: string;
+            /** @example Mumbai Indians */
+            name?: string;
+        };
+        /** @description A franchise's record at the venue; winPercentage = wins x 100 / (played - no results) */
+        VenueTeamDto: {
+            team?: components["schemas"]["TeamRef"];
+            /** Format: int64 */
+            played: number;
+            /** Format: int64 */
+            won: number;
+            /** Format: int64 */
+            lost: number;
+            /** Format: int64 */
+            noResult: number;
+            winPercentage?: number;
+            averageScore?: number;
+            /** Format: int32 */
+            highestScore?: number;
         };
         ApiResponseVenueStatsDto: {
             /** @description The resource or the collection of resources */
@@ -1043,18 +1207,6 @@ export interface components {
         TeamOpponentStatsDto: {
             opponent?: components["schemas"]["TeamRef"];
             stats?: components["schemas"]["TeamStatsDto"];
-        };
-        /** @description A franchise (renamed teams share one franchise) */
-        TeamRef: {
-            /**
-             * Format: int32
-             * @example 6
-             */
-            id: number;
-            /** @example MI */
-            code?: string;
-            /** @example Mumbai Indians */
-            name?: string;
         };
         /** @description Application build and database schema status */
         SystemStatus: {
@@ -1485,6 +1637,87 @@ export interface components {
             player?: components["schemas"]["PlayerRef"];
             batting?: components["schemas"]["PhaseBattingDto"][];
             bowling?: components["schemas"]["PhaseBowlingDto"][];
+        };
+        ApiResponsePlayerConsistencyDto: {
+            /** @description The resource or the collection of resources */
+            data?: components["schemas"]["PlayerConsistencyDto"];
+            /** @description Present on collections */
+            pagination?: components["schemas"]["Pagination"];
+            /** @description generatedAt, dataVersion, applied filters and endpoint-specific context */
+            meta?: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * @description Spread of innings scores. standardDeviation is the sample standard deviation (null with fewer than two
+         *     innings); coefficientOfVariation = 100 x standard deviation / mean score (lower is steadier). Percentages
+         *     are of innings batted. recentInnings: the last 10, newest first.
+         */
+        BattingConsistencyDto: {
+            /** Format: int64 */
+            innings: number;
+            average?: number;
+            medianScore?: number;
+            standardDeviation?: number;
+            coefficientOfVariation?: number;
+            thirtyPlusPercentage?: number;
+            fiftyPlusPercentage?: number;
+            underTenPercentage?: number;
+            scoreBands?: components["schemas"]["InningsBandDto"][];
+            recentInnings?: components["schemas"]["BattingFormDto"][];
+        };
+        BattingFormDto: {
+            /** Format: int32 */
+            matchId: number;
+            /** Format: date */
+            date?: string;
+            opponent?: components["schemas"]["TeamRef"];
+            /** Format: int32 */
+            runs: number;
+            /** Format: int32 */
+            balls: number;
+            notOut: boolean;
+            strikeRate?: number;
+        };
+        /**
+         * @description wicketInningsPercentage / multiWicketInningsPercentage: innings with 1+ / 2+ wickets, % of innings bowled.
+         *     Economy spread and economicalInningsPercentage (economy under 8) use innings of at least one over.
+         *     recentInnings: the last 10, newest first.
+         */
+        BowlingConsistencyDto: {
+            /** Format: int64 */
+            innings: number;
+            wicketInningsPercentage?: number;
+            multiWicketInningsPercentage?: number;
+            medianWickets?: number;
+            economyStandardDeviation?: number;
+            economyCoefficientOfVariation?: number;
+            economicalInningsPercentage?: number;
+            recentInnings?: components["schemas"]["BowlingFormDto"][];
+        };
+        BowlingFormDto: {
+            /** Format: int32 */
+            matchId: number;
+            /** Format: date */
+            date?: string;
+            opponent?: components["schemas"]["TeamRef"];
+            overs?: string;
+            /** Format: int32 */
+            runsConceded: number;
+            /** Format: int32 */
+            wickets: number;
+            economy?: number;
+        };
+        InningsBandDto: {
+            /** @example 30-49 */
+            label?: string;
+            /** Format: int64 */
+            innings: number;
+        };
+        PlayerConsistencyDto: {
+            player?: components["schemas"]["PlayerRef"];
+            batting?: components["schemas"]["BattingConsistencyDto"];
+            bowling?: components["schemas"]["BowlingConsistencyDto"];
         };
         ApiResponsePlayerBowlingDto: {
             /** @description The resource or the collection of resources */
@@ -1943,6 +2176,228 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        ApiResponseTossInsightsDto: {
+            /** @description The resource or the collection of resources */
+            data?: components["schemas"]["TossInsightsDto"];
+            /** @description Present on collections */
+            pagination?: components["schemas"]["Pagination"];
+            /** @description generatedAt, dataVersion, applied filters and endpoint-specific context */
+            meta?: {
+                [key: string]: unknown;
+            };
+        };
+        /** @description The selected franchise's own tosses (present when team is given) */
+        TeamTossDto: {
+            team?: components["schemas"]["TeamRef"];
+            /** Format: int64 */
+            matches: number;
+            /** Format: int64 */
+            tossesWon: number;
+            tossWinPercentage?: number;
+            /** Format: int64 */
+            choseToBat: number;
+            /** Format: int64 */
+            choseToField: number;
+            /** Format: int64 */
+            decidedAfterTossWin: number;
+            /** Format: int64 */
+            winsAfterTossWin: number;
+            winPercentageAfterTossWin?: number;
+            /** Format: int64 */
+            decidedAfterTossLoss: number;
+            /** Format: int64 */
+            winsAfterTossLoss: number;
+            winPercentageAfterTossLoss?: number;
+        };
+        TossDecisionDto: {
+            /** @enum {string} */
+            decision?: "bat" | "field";
+            result?: components["schemas"]["TossRowDto"];
+        };
+        TossInsightsDto: {
+            overall?: components["schemas"]["TossRowDto"];
+            byDecision?: components["schemas"]["TossDecisionDto"][];
+            bySeason?: components["schemas"]["TossSeasonDto"][];
+            team?: components["schemas"]["TeamTossDto"];
+        };
+        /**
+         * @description Matches with a recorded toss. decided excludes no-results; tossWinnerWinPercentage = toss winner's wins x
+         *     100 / decided (a tie won in a super over is a win). choseToBatFirst counts tosses won and bat first.
+         */
+        TossRowDto: {
+            /** Format: int64 */
+            matches: number;
+            /** Format: int64 */
+            decided: number;
+            /** Format: int64 */
+            tossWinnerWins: number;
+            tossWinnerWinPercentage?: number;
+            /** Format: int64 */
+            choseToBatFirst: number;
+        };
+        TossSeasonDto: {
+            /** Format: int32 */
+            season: number;
+            result?: components["schemas"]["TossRowDto"];
+        };
+        ApiResponseSeasonComparisonDto: {
+            /** @description The resource or the collection of resources */
+            data?: components["schemas"]["SeasonComparisonDto"];
+            /** @description Present on collections */
+            pagination?: components["schemas"]["Pagination"];
+            /** @description generatedAt, dataVersion, applied filters and endpoint-specific context */
+            meta?: {
+                [key: string]: unknown;
+            };
+        };
+        /** @description Change from the first to the last season compared (last minus first) */
+        SeasonChangeDto: {
+            /** Format: int32 */
+            from: number;
+            /** Format: int32 */
+            to: number;
+            averageScore?: number;
+            runRate?: number;
+            foursPerMatch?: number;
+            sixesPerMatch?: number;
+            wicketsPerMatch?: number;
+            averageFirstInningsScore?: number;
+            battingFirstWinPercentage?: number;
+            tossWinnerWinPercentage?: number;
+            powerplayRunRate?: number;
+            middleRunRate?: number;
+            deathRunRate?: number;
+        };
+        SeasonComparisonDto: {
+            seasons?: components["schemas"]["SeasonInsightDto"][];
+            change?: components["schemas"]["SeasonChangeDto"];
+        };
+        /**
+         * @description One season. Per-match figures divide by matches; averageScore by regular innings; battingFirstWinPercentage
+         *     over decisive matches; tossWinnerWinPercentage over matches with a toss and a result.
+         */
+        SeasonInsightDto: {
+            /** Format: int32 */
+            season: number;
+            /** Format: int64 */
+            matches: number;
+            /** Format: int64 */
+            runs: number;
+            averageScore?: number;
+            runRate?: number;
+            foursPerMatch?: number;
+            sixesPerMatch?: number;
+            wicketsPerMatch?: number;
+            averageFirstInningsScore?: number;
+            battingFirstWinPercentage?: number;
+            tossWinnerWinPercentage?: number;
+            powerplayRunRate?: number;
+            middleRunRate?: number;
+            deathRunRate?: number;
+            /** Format: int32 */
+            highestScore?: number;
+            champion?: components["schemas"]["TeamRef"];
+        };
+        ApiResponsePhaseInsightsDto: {
+            /** @description The resource or the collection of resources */
+            data?: components["schemas"]["PhaseInsightsDto"];
+            /** @description Present on collections */
+            pagination?: components["schemas"]["Pagination"];
+            /** @description generatedAt, dataVersion, applied filters and endpoint-specific context */
+            meta?: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * @description batting: scoring in the innings in scope (with a team, the team's batting); bowling: with a team, what it
+         *     conceded and took. bySeason follows batting.
+         */
+        PhaseInsightsDto: {
+            batting?: components["schemas"]["PhaseRowDto"][];
+            bowling?: components["schemas"]["PhaseRowDto"][];
+            bySeason?: components["schemas"]["PhaseSeasonDto"][];
+        };
+        /**
+         * @description One phase (powerplay overs 1-6, middle 7-15, death 16-20) over the innings in scope. runRate = 6 x runs /
+         *     legal balls; boundary % and dot % are of legal balls; per-innings figures divide by innings with a ball
+         *     bowled in the phase.
+         */
+        PhaseRowDto: {
+            /** @enum {string} */
+            phase?: "powerplay" | "middle" | "death";
+            /** Format: int64 */
+            innings: number;
+            /** Format: int64 */
+            runs: number;
+            /** Format: int64 */
+            legalBalls: number;
+            overs?: string;
+            runRate?: number;
+            /** Format: int64 */
+            wickets: number;
+            wicketsPerInnings?: number;
+            runsPerInnings?: number;
+            /** Format: int64 */
+            fours: number;
+            /** Format: int64 */
+            sixes: number;
+            boundaryPercentage?: number;
+            dotBallPercentage?: number;
+        };
+        PhaseSeasonDto: {
+            /** Format: int32 */
+            season: number;
+            powerplayRunRate?: number;
+            middleRunRate?: number;
+            deathRunRate?: number;
+        };
+        ApiResponseBattingFirstInsightsDto: {
+            /** @description The resource or the collection of resources */
+            data?: components["schemas"]["BattingFirstInsightsDto"];
+            /** @description Present on collections */
+            pagination?: components["schemas"]["Pagination"];
+            /** @description generatedAt, dataVersion, applied filters and endpoint-specific context */
+            meta?: {
+                [key: string]: unknown;
+            };
+        };
+        BattingFirstInsightsDto: {
+            overall?: components["schemas"]["BattingFirstRowDto"];
+            bySeason?: components["schemas"]["BattingFirstSeasonDto"][];
+            byTarget?: components["schemas"]["TargetBandDto"][];
+        };
+        /** @description Decisive matches (won by runs or wickets). averageFirstInningsScore excludes D/L-adjusted matches. */
+        BattingFirstRowDto: {
+            /** Format: int64 */
+            decisiveMatches: number;
+            /** Format: int64 */
+            battingFirstWins: number;
+            /** Format: int64 */
+            chasingWins: number;
+            battingFirstWinPercentage?: number;
+            chasingWinPercentage?: number;
+            averageFirstInningsScore?: number;
+        };
+        BattingFirstSeasonDto: {
+            /** Format: int32 */
+            season: number;
+            result?: components["schemas"]["BattingFirstRowDto"];
+        };
+        /**
+         * @description Chases of a target (first-innings total + 1) in the band: from and to inclusive, null unbounded.
+         *     successPercentage = successful chases x 100 / matches. D/L-adjusted matches are left out.
+         */
+        TargetBandDto: {
+            /** Format: int32 */
+            from?: number;
+            /** Format: int32 */
+            to?: number;
+            /** Format: int64 */
+            matches: number;
+            /** Format: int64 */
+            chasedSuccessfully: number;
+            successPercentage?: number;
+        };
         ApiResponseHeadToHeadDto: {
             /** @description The resource or the collection of resources */
             data?: components["schemas"]["HeadToHeadDto"];
@@ -1964,6 +2419,8 @@ export interface components {
             team1?: components["schemas"]["RivalSideDto"];
             team2?: components["schemas"]["RivalSideDto"];
             bySeason?: components["schemas"]["SeasonMeetingsDto"][];
+            /** @description Meetings per venue, most first */
+            byVenue?: components["schemas"]["VenueMeetingsDto"][];
             /** @description Up to five most recent meetings */
             recentMatches?: components["schemas"]["MatchSummaryDto"][];
         };
@@ -1985,6 +2442,19 @@ export interface components {
         SeasonMeetingsDto: {
             /** Format: int32 */
             season: number;
+            /** Format: int64 */
+            matches: number;
+            /** Format: int64 */
+            team1Wins: number;
+            /** Format: int64 */
+            team2Wins: number;
+            /** Format: int64 */
+            ties: number;
+            /** Format: int64 */
+            noResults: number;
+        };
+        VenueMeetingsDto: {
+            venue?: components["schemas"]["VenueRef"];
             /** Format: int64 */
             matches: number;
             /** Format: int64 */
@@ -2115,6 +2585,80 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ApiResponseVenueDto"];
+                };
+            };
+            /** @description Not modified: the If-None-Match ETag still matches the data version */
+            304: {
+                headers: {
+                    /** @description Weak entity tag of the data version */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid parameter value, type or combination */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+            /** @description Unknown resource */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+            /** @description Well-formed but unprocessable request, e.g. an unknown filter id */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+            /** @description Unexpected error; quote errorId when reporting it */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    teams: {
+        parameters: {
+            query?: {
+                /** @description One IPL season (year), e.g. 2024. Cannot be combined with seasonFrom/seasonTo. */
+                season?: number;
+                /** @description First season of a range (inclusive) */
+                seasonFrom?: number;
+                /** @description Last season of a range (inclusive); must not be before seasonFrom */
+                seasonTo?: number;
+            };
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseListVenueTeamDto"];
                 };
             };
             /** @description Not modified: the If-None-Match ETag still matches the data version */
@@ -3519,6 +4063,84 @@ export interface operations {
             };
         };
     };
+    consistency: {
+        parameters: {
+            query?: {
+                /** @description Only matches against this franchise (team id) */
+                opponent?: number;
+                /** @description Only matches at this venue (venue id) */
+                venue?: number;
+                /** @description One IPL season (year), e.g. 2024. Cannot be combined with seasonFrom/seasonTo. */
+                season?: number;
+                /** @description First season of a range (inclusive) */
+                seasonFrom?: number;
+                /** @description Last season of a range (inclusive); must not be before seasonFrom */
+                seasonTo?: number;
+            };
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponsePlayerConsistencyDto"];
+                };
+            };
+            /** @description Not modified: the If-None-Match ETag still matches the data version */
+            304: {
+                headers: {
+                    /** @description Weak entity tag of the data version */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid parameter value, type or combination */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+            /** @description Unknown resource */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+            /** @description Well-formed but unprocessable request, e.g. an unknown filter id */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+            /** @description Unexpected error; quote errorId when reporting it */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
     bowling: {
         parameters: {
             query?: {
@@ -4191,6 +4813,8 @@ export interface operations {
                 metric?: "wickets" | "economy" | "average" | "strikeRate" | "dotBalls";
                 /** @description Only performances for this franchise (team id) */
                 team?: number;
+                /** @description Only performances at this venue (venue id) */
+                venue?: number;
                 /** @description One IPL season (year), e.g. 2024. Cannot be combined with seasonFrom/seasonTo. */
                 season?: number;
                 /** @description First season of a range (inclusive) */
@@ -4271,6 +4895,8 @@ export interface operations {
                 metric?: "runs" | "average" | "strikeRate" | "fours" | "sixes" | "hundreds" | "fifties";
                 /** @description Only performances for this franchise (team id) */
                 team?: number;
+                /** @description Only performances at this venue (venue id) */
+                venue?: number;
                 /** @description One IPL season (year), e.g. 2024. Cannot be combined with seasonFrom/seasonTo. */
                 season?: number;
                 /** @description First season of a range (inclusive) */
@@ -4295,6 +4921,317 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ApiResponseListBattingLeaderDto"];
+                };
+            };
+            /** @description Not modified: the If-None-Match ETag still matches the data version */
+            304: {
+                headers: {
+                    /** @description Weak entity tag of the data version */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid parameter value, type or combination */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+            /** @description Unknown resource */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+            /** @description Well-formed but unprocessable request, e.g. an unknown filter id */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+            /** @description Unexpected error; quote errorId when reporting it */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    toss: {
+        parameters: {
+            query?: {
+                /** @description Franchise (team id) */
+                team?: number;
+                /** @description Only matches against this franchise (team id) */
+                opponent?: number;
+                /** @description Only matches at this venue (venue id) */
+                venue?: number;
+                /** @description One IPL season (year), e.g. 2024. Cannot be combined with seasonFrom/seasonTo. */
+                season?: number;
+                /** @description First season of a range (inclusive) */
+                seasonFrom?: number;
+                /** @description Last season of a range (inclusive); must not be before seasonFrom */
+                seasonTo?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseTossInsightsDto"];
+                };
+            };
+            /** @description Not modified: the If-None-Match ETag still matches the data version */
+            304: {
+                headers: {
+                    /** @description Weak entity tag of the data version */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid parameter value, type or combination */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+            /** @description Unknown resource */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+            /** @description Well-formed but unprocessable request, e.g. an unknown filter id */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+            /** @description Unexpected error; quote errorId when reporting it */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    seasons_2: {
+        parameters: {
+            query?: {
+                /** @description One IPL season (year), e.g. 2024. Cannot be combined with seasonFrom/seasonTo. */
+                season?: number;
+                /** @description First season of a range (inclusive) */
+                seasonFrom?: number;
+                /** @description Last season of a range (inclusive); must not be before seasonFrom */
+                seasonTo?: number;
+                /**
+                 * @description Comma-separated seasons to compare (instead of a range)
+                 * @example 2016,2026
+                 */
+                seasons?: number[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseSeasonComparisonDto"];
+                };
+            };
+            /** @description Not modified: the If-None-Match ETag still matches the data version */
+            304: {
+                headers: {
+                    /** @description Weak entity tag of the data version */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid parameter value, type or combination */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+            /** @description Unknown resource */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+            /** @description Well-formed but unprocessable request, e.g. an unknown filter id */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+            /** @description Unexpected error; quote errorId when reporting it */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    phases_1: {
+        parameters: {
+            query?: {
+                /** @description Franchise (team id) */
+                team?: number;
+                /** @description Only matches against this franchise (team id) */
+                opponent?: number;
+                /** @description Only matches at this venue (venue id) */
+                venue?: number;
+                /** @description One IPL season (year), e.g. 2024. Cannot be combined with seasonFrom/seasonTo. */
+                season?: number;
+                /** @description First season of a range (inclusive) */
+                seasonFrom?: number;
+                /** @description Last season of a range (inclusive); must not be before seasonFrom */
+                seasonTo?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponsePhaseInsightsDto"];
+                };
+            };
+            /** @description Not modified: the If-None-Match ETag still matches the data version */
+            304: {
+                headers: {
+                    /** @description Weak entity tag of the data version */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid parameter value, type or combination */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+            /** @description Unknown resource */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+            /** @description Well-formed but unprocessable request, e.g. an unknown filter id */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+            /** @description Unexpected error; quote errorId when reporting it */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    battingFirst: {
+        parameters: {
+            query?: {
+                /** @description Franchise (team id) */
+                team?: number;
+                /** @description Only matches against this franchise (team id) */
+                opponent?: number;
+                /** @description Only matches at this venue (venue id) */
+                venue?: number;
+                /** @description One IPL season (year), e.g. 2024. Cannot be combined with seasonFrom/seasonTo. */
+                season?: number;
+                /** @description First season of a range (inclusive) */
+                seasonFrom?: number;
+                /** @description Last season of a range (inclusive); must not be before seasonFrom */
+                seasonTo?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseBattingFirstInsightsDto"];
                 };
             };
             /** @description Not modified: the If-None-Match ETag still matches the data version */

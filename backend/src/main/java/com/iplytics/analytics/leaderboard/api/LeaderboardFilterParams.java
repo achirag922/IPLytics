@@ -14,20 +14,26 @@ public class LeaderboardFilterParams extends SeasonFilterParams {
     @Positive
     private Integer team;
 
+    @Parameter(description = "Only performances at this venue (venue id)")
+    @Positive
+    private Integer venue;
+
     @Override
     public AnalyticsFilter toFilter() {
-        return super.toFilter().team(team);
+        return super.toFilter().team(team).venue(venue);
     }
 
     @Override
     public Map<String, Object> describe() {
         Map<String, Object> applied = super.describe();
         putIfSet(applied, "team", team);
+        putIfSet(applied, "venue", venue);
         return applied;
     }
 
     public void requireKnownReferences(RefLookup refs) {
         refs.requireTeamFilter("team", team);
+        refs.requireVenueFilter("venue", venue);
     }
 
     public Integer getTeam() {
@@ -36,5 +42,13 @@ public class LeaderboardFilterParams extends SeasonFilterParams {
 
     public void setTeam(Integer team) {
         this.team = team;
+    }
+
+    public Integer getVenue() {
+        return venue;
+    }
+
+    public void setVenue(Integer venue) {
+        this.venue = venue;
     }
 }

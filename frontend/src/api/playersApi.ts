@@ -11,6 +11,7 @@ export type PlayerVenues = Schemas['PlayerVenuesDto'];
 export type BattingSummary = Schemas['BattingSummaryDto'];
 export type BowlingSummary = Schemas['BowlingSummaryDto'];
 export type PlayerRef = Schemas['PlayerRef'];
+export type PlayerConsistency = Schemas['PlayerConsistencyDto'];
 export type PlayerListQuery = QueryOf<'/api/v1/players'>;
 /** Filters accepted by the player statistics endpoints (season range, opponent, venue). */
 export type PlayerStatsQuery = QueryOf<'/api/v1/players/{id}/batting'>;
@@ -28,4 +29,6 @@ export const playersApi = {
     getData<PlayerVsTeams>(`/players/${id}/vs-teams`, query, signal),
   venues: (id: number, query: PlayerStatsQuery, signal?: AbortSignal) =>
     getData<PlayerVenues>(`/players/${id}/venues`, query, signal),
+  consistency: (id: number, query: PlayerStatsQuery, signal?: AbortSignal) =>
+    getData<PlayerConsistency>(`/players/${id}/consistency`, query, signal),
 };

@@ -1,6 +1,9 @@
 import { useMemo } from 'react';
+import { useNavigate } from 'react-router';
+import { HeadToHeadExtras } from './HeadToHeadExtras';
 import type { HeadToHeadQuery } from '@/api/analyticsApi';
 import { StatCard, StatGrid } from '@/components/cards/StatCard';
+import { RivalryBanner } from '@/components/cards/RivalryBanner';
 import { TeamLink } from '@/components/cards/EntityLinks';
 import { BarChart, ChartCard } from '@/components/charts';
 import { FilterBar, SeasonRangeFilter, TeamFilter, VenueFilter } from '@/components/filters';
@@ -18,6 +21,7 @@ import { matchColumns } from '@/features/matches/matchColumns';
 
 export function HeadToHeadPage() {
   const url = useUrlState();
+  const navigate = useNavigate();
   const lookup = useTeamLookup();
   const team1Code = url.get('team1')?.toUpperCase();
   const team2Code = url.get('team2')?.toUpperCase();
@@ -93,6 +97,11 @@ export function HeadToHeadPage() {
           const nameB = b?.team?.code ?? 'Team 2';
           return (
             <div className="space-y-4">
+              <RivalryBanner
+                a={{ team: a?.team, wins: a?.wins ?? 0 }}
+                b={{ team: b?.team, wins: b?.wins ?? 0 }}
+                matches={d.matches}
+              />
               <StatGrid className="lg:grid-cols-5">
                 <StatCard label="Matches" value={formatInteger(d.matches)} />
                 <StatCard
@@ -160,15 +169,19 @@ export function HeadToHeadPage() {
                 </Card>
               </div>
               {(d.bySeason ?? []).length > 1 && (
-                <ChartCard title="Wins by season">
+                <ChartCard title="Wins by season" description="Click a season to list those matches">
                   <BarChart
                     height={260}
+                    zoom={(d.bySeason ?? []).length > 12}
                     categories={(d.bySeason ?? []).map((s) => s.season)}
                     series={[
                       { name: nameA, data: (d.bySeason ?? []).map((s) => s.team1Wins), stack: 'w' },
                       { name: nameB, data: (d.bySeason ?? []).map((s) => s.team2Wins), stack: 'w' },
                     ]}
                     ariaLabel={`${nameA} and ${nameB} wins in each season`}
+                    onItemClick={(_, season) =>
+                      navigate(`/matches?team=${team1Code}&opponent=${team2Code}&season=${season}`)
+                    }
                   />
                 </ChartCard>
               )}
@@ -186,6 +199,16 @@ export function HeadToHeadPage() {
                   />
                 </CardContent>
               </Card>
+              {team1 && team2 && (
+                <HeadToHeadExtras
+                  data={d}
+                  team1={team1}
+                  team2={team2}
+                  seasonFrom={seasonFrom}
+                  seasonTo={seasonTo}
+                  venue={venue}
+                />
+              )}
             </div>
           );
         }}

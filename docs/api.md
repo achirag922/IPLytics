@@ -169,3 +169,27 @@ existing field changed meaning.
   for the whole list.
 - **OpenAPI**: primitive fields of response records are marked `required`, so generated TypeScript types declare
   them non-optional.
+
+## V1.6 additions (advanced analytics)
+
+All additive; existing responses keep their fields. Definitions: docs/metrics.md sections 9 and 10.
+
+| Endpoint | Returns | Query path | Real-data time |
+|---|---|---|---|
+| `GET /insights/toss` | Toss-winner results overall, by decision and by season; with `team`, the franchise's own toss record | 3 grouped queries on `team_match_result` (+1 with team) | ~35 ms |
+| `GET /insights/batting-first` | Batting-first vs chasing results overall and by season, average first-innings score, chase success by target band | 3 queries on `team_match_result` | ~35 ms |
+| `GET /insights/phases` | Powerplay / middle / death: run rate, wickets and runs per innings, boundary %, dot %; run rate by season; with `team`, batting and bowling | 2–3 grouped queries on `analytics.innings_phase` | ~25 ms |
+| `GET /insights/seasons` | Season-level comparison for `seasonFrom`/`seasonTo` or `seasons=2016,2026` (2–10), with the change from first to last | 3 grouped queries (`innings_summary`, `team_match_result`, `innings_phase`) | ~30–50 ms |
+| `GET /players/{id}/consistency` | Median, spread, coefficient of variation, 30+/50+/under-10 shares, score bands, last 10 innings; bowling equivalents | 4 queries on `batting_innings` / `bowling_innings` | ~20 ms |
+| `GET /venues/{id}/teams` | Each franchise's record, average and highest score at the venue | 1 grouped query on `team_match_result` | ~30 ms |
+
+Insight filters: `season` or `seasonFrom`/`seasonTo`, `team`, `opponent`, `venue`. For toss and batting first,
+`team` and `opponent` select the matches they played in (together, their meetings). For phases, `team` selects the
+team's batting and adds its bowling. Unknown ids are 422, invalid values 400, as everywhere.
+
+Changed endpoints (additive):
+
+- `GET /leaderboards/batting|bowling`: optional `venue` filter.
+- `GET /head-to-head`: adds `byVenue` (meetings per venue, most first).
+- OpenAPI: response DTO class names must be unique (springdoc names schemas by simple class name); a unit test
+  enforces it after a collision between two `ScoreBandDto`s was found in V1.6.

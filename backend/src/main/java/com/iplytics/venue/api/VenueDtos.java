@@ -1,5 +1,6 @@
 package com.iplytics.venue.api;
 
+import com.iplytics.common.web.Refs.TeamRef;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.util.List;
@@ -28,6 +29,11 @@ public final class VenueDtos {
     }
 
     public record VenueSeasonStatsDto(int season, VenueStatsDto stats) {
+    }
+
+    @Schema(description = "A franchise's record at the venue; winPercentage = wins x 100 / (played - no results)")
+    public record VenueTeamDto(TeamRef team, long played, long won, long lost, long noResult,
+                               BigDecimal winPercentage, BigDecimal averageScore, Integer highestScore) {
     }
 
     @Schema(description = "Band of first-innings totals: from and to are inclusive; null means unbounded")

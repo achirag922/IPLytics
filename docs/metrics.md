@@ -120,6 +120,7 @@ These rules are the standard IPL ones. Checked against the published tables, NRR
 - **2008**: four sides differ by up to 0.006 in NRR (e.g. MI 0.575 vs 0.570 published), from rain-reduced matches
   whose official revised overs are not described exactly by the source.
 
+
 ## 7. Leaderboard qualification (defaults, overridable via API parameters)
 
 | Leaderboard | Default minimum |
@@ -136,3 +137,31 @@ These rules are the standard IPL ones. Checked against the published tables, NRR
 - **Extras are exact per ball,** e.g. a no-ball plus byes.
 - **Matches abandoned without a ball bowled are absent from the source.** No-result matches with play are included.
 - **Impact Player substitutions are not modelled in core yet.** The source `replacements` are kept in `staging.deliveries.source_unmapped`.
+
+## 9. Insights (V1.6, `/api/v1/insights/*`)
+
+| Metric | Definition |
+|---|---|
+| Toss winner win % | Matches the toss winner won × 100 ÷ matches with a recorded toss and a result. A tie decided by a super over counts as a win for its winner. |
+| Chose to bat | Matches in which the toss winner batted first. |
+| Team toss record | Tosses won ÷ matches; win % after winning the toss and after losing it (matches with a result). |
+| Batting first / chasing win % | Wins of the side batting first (second) × 100 ÷ decisive matches (won by runs or wickets; ties and no-results excluded). |
+| Chase success by target | Target = first-innings total + 1. Bands: under 150, 150–169, 170–189, 190–209, 210 and over. Success % = successful chases × 100 ÷ matches in the band. D/L-adjusted matches are excluded (their target is revised). |
+| Phase figures | Over the regular innings in scope: run rate = 6 × runs ÷ legal balls; wickets and runs per innings divide by innings with a ball in the phase; boundary % = (fours + sixes) × 100 ÷ legal balls; dot % = legal balls with no run × 100 ÷ legal balls. All three phases are always returned (zero rows where nothing was bowled). |
+| Team phases | With a team: batting = the team's innings; bowling = the innings it bowled (runs it conceded, wickets it took). |
+| Season comparison | Per season: average score (runs ÷ regular innings), run rate, fours / sixes / wickets per match, average first-innings score (decisive, no D/L), batting-first win %, toss-winner win %, phase run rates, highest score. `change` = last season − first season, computed by the backend. |
+
+## 10. Player consistency (V1.6, `/api/v1/players/{id}/consistency`)
+
+| Metric | Definition |
+|---|---|
+| Median score | Middle innings score (`percentile_cont(0.5)`), regular innings in scope. |
+| Spread | Sample standard deviation of innings scores; undefined (null) with fewer than two innings. |
+| Coefficient of variation | 100 × spread ÷ mean score. Lower is steadier; null when undefined or the mean is 0. |
+| 30+ / 50+ / under 10 | Innings in the band × 100 ÷ innings batted (not-out innings count at their score). |
+| Score bands | Innings scoring 0, 1–9, 10–29, 30–49, 50–99, 100+. |
+| Wicket-taking / 2+ wicket innings | Innings with ≥ 1 / ≥ 2 wickets × 100 ÷ innings bowled. |
+| Economy spread | Standard deviation of economy over innings of at least one over (6 legal balls); with its coefficient of variation. |
+| Economical innings | Innings of at least one over with economy under 8 × 100 ÷ innings of at least one over. |
+| Recent form | The last 10 innings, newest first (date, opponent, figures). |
+

@@ -14,8 +14,9 @@ export default defineConfig({
     proxy: { '/api': 'http://localhost:8080' },
   },
   build: {
-    // The tree-shaken ECharts chunk is ~640 kB (~220 kB gzipped); it is cached separately from app code.
-    chunkSizeWarningLimit: 700,
+    // The tree-shaken ECharts chunk (charts, zoom, toolbox) is ~715 kB (~240 kB gzipped); it loads only with chart
+    // pages and is cached separately from app code.
+    chunkSizeWarningLimit: 750,
     rollupOptions: {
       output: {
         // Keep the large charting library in its own long-lived chunk.

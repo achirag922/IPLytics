@@ -3,7 +3,8 @@ import type { ScoreBand } from '@/api/venuesApi';
 import { StatCard, StatGrid } from '@/components/cards/StatCard';
 import { BarChart, ChartCard, LineChart, PieChart } from '@/components/charts';
 import { StatsFilterBar } from '@/components/filters';
-import { PageHeader } from '@/components/layout/PageHeader';
+import { MapPin } from 'lucide-react';
+import { EntityHero } from '@/components/layout/EntityHero';
 import { ChartSkeleton, PageSkeleton, StatCardSkeleton } from '@/components/loading/Skeletons';
 import { ErrorState } from '@/components/states/ErrorState';
 import { QueryContent } from '@/components/states/QueryContent';
@@ -17,6 +18,7 @@ import {
 } from '@/hooks/useVenueQueries';
 import { formatDecimal, formatInteger, formatPercent } from '@/lib/format';
 import { NotFoundPage } from '@/features/notFound/NotFoundPage';
+import { VenueInsights } from './VenueInsights';
 
 const NO_STATS = 'No statistics available for the selected filters';
 
@@ -35,6 +37,9 @@ export function VenueDetailPage() {
     seasonFrom: filters.query?.seasonFrom,
     seasonTo: filters.query?.seasonTo,
   };
+  // Cross-filter: clicking a season in a chart focuses the whole page on it.
+  const selectSeason = (season: number) =>
+    filters.url.update({ season, seasonFrom: undefined, seasonTo: undefined });
   const stats = useVenueStatsQuery(venueId, seasonQuery);
   const seasons = useVenueSeasonsQuery(venueId, seasonQuery);
   const distribution = useVenueScoreDistributionQuery(venueId, seasonQuery);
@@ -52,10 +57,21 @@ export function VenueDetailPage() {
 
   return (
     <>
-      <PageHeader
+      <EntityHero
         breadcrumbs={[{ label: 'Venues', to: '/venues' }, { label: v.name ?? '' }]}
+        media={
+          <span className="grid size-16 place-items-center rounded-2xl bg-brand-gradient text-white shadow-md sm:size-20">
+            <MapPin aria-hidden="true" className="size-8 sm:size-10" />
+          </span>
+        }
+        eyebrow={<>Venue{v.city && <> · {v.city}</>}</>}
         title={v.name}
-        description={`${v.city ?? ''} · ${v.matches} matches · ${v.firstSeason}–${v.lastSeason}`}
+        subtitle={`${v.firstSeason}–${v.lastSeason}`}
+        stats={[
+          { label: 'Matches hosted', value: formatInteger(v.matches) },
+          { label: 'First season', value: v.firstSeason ?? '–' },
+          { label: 'Latest season', value: v.lastSeason ?? '–' },
+        ]}
       />
       <StatsFilterBar state={filters} />
       <QueryContent
@@ -145,10 +161,18 @@ export function VenueDetailPage() {
                 { name: 'Highest score', data: rows.map((r) => r.stats?.highestScore) },
               ]}
               ariaLabel={`Average first-innings and highest scores per season at ${v.name}`}
+              zoom={rows.length > 12}
+              onItemClick={(_, season) => selectSeason(Number(season))}
             />
           )}
         </QueryContent>
       </ChartCard>
+      <VenueInsights
+        venueId={v.id}
+        venueName={v.name ?? ''}
+        seasons={seasonQuery}
+        onSeasonSelect={selectSeason}
+      />
     </>
   );
 }

@@ -1,14 +1,19 @@
 package com.iplytics.venue.service;
 
+import com.iplytics.analytics.query.TeamQueries;
 import com.iplytics.analytics.query.VenueQueries;
 import com.iplytics.common.exception.ResourceNotFoundException;
+import com.iplytics.common.web.RefLookup;
+import com.iplytics.common.web.Refs.TeamRef;
 import com.iplytics.common.web.SeasonFilterParams;
 import com.iplytics.venue.api.VenueDtos.ScoreBandDto;
 import com.iplytics.venue.api.VenueDtos.VenueDto;
 import com.iplytics.venue.api.VenueDtos.VenueSeasonStatsDto;
 import com.iplytics.venue.api.VenueDtos.VenueStatsDto;
+import com.iplytics.venue.api.VenueDtos.VenueTeamDto;
 import com.iplytics.venue.repository.VenueRepository;
 import java.util.List;
+import java.util.Map;
 import org.springframework.stereotype.Service;
 
 /** Venue use cases on top of the V1.3 venue query. */
@@ -17,10 +22,25 @@ public class VenueService {
 
     private final VenueRepository venues;
     private final VenueQueries venueQueries;
+    private final TeamQueries teamQueries;
+    private final RefLookup refs;
 
-    public VenueService(VenueRepository venues, VenueQueries venueQueries) {
+    public VenueService(VenueRepository venues, VenueQueries venueQueries, TeamQueries teamQueries, RefLookup refs) {
         this.venues = venues;
         this.venueQueries = venueQueries;
+        this.teamQueries = teamQueries;
+        this.refs = refs;
+    }
+
+    /** Each franchise's record at the venue, most wins first. */
+    public List<VenueTeamDto> teams(int id, SeasonFilterParams params) {
+        get(id);
+        Map<Integer, TeamRef> teams = refs.teams();
+        return teamQueries.atVenue(id, params.toFilter()).stream().map(g -> {
+            TeamQueries.Record r = g.stats().overall();
+            return new VenueTeamDto(teams.get(g.key()), r.played(), r.won(), r.lost(), r.noResult(),
+                    r.winPercentage(), g.stats().averageScore(), g.stats().highestScore());
+        }).toList();
     }
 
     public List<VenueDto> list() {

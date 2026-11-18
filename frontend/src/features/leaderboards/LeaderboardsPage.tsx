@@ -1,9 +1,17 @@
 import type { UseQueryResult } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import { useNavigate } from 'react-router';
 import type { BattingLeader, BattingMetric, BowlingLeader, BowlingMetric } from '@/api/analyticsApi';
 import { PlayerLink } from '@/components/cards/EntityLinks';
 import { BarChart, ChartCard } from '@/components/charts';
-import { FilterBar, SeasonFilter, SeasonRangeFilter, SelectFilter, TeamFilter } from '@/components/filters';
+import {
+  FilterBar,
+  SeasonFilter,
+  SeasonRangeFilter,
+  SelectFilter,
+  TeamFilter,
+  VenueFilter,
+} from '@/components/filters';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { TableSkeleton } from '@/components/loading/Skeletons';
 import { QueryContent } from '@/components/states/QueryContent';
@@ -37,6 +45,7 @@ const FILTER_KEYS = [
   'seasonFrom',
   'seasonTo',
   'team',
+  'venue',
   'minimumBalls',
   'minimumOvers',
   'limit',
@@ -44,7 +53,7 @@ const FILTER_KEYS = [
 
 const battingColumns: Column<BattingLeader>[] = [
   { key: 'rank', header: '#', align: 'right', cell: (r) => r.rank },
-  { key: 'player', header: 'Batter', cell: (r) => <PlayerLink player={r.player} /> },
+  { key: 'player', header: 'Batter', cell: (r) => <PlayerLink player={r.player} avatar /> },
   {
     key: 'value',
     header: 'Value',
@@ -64,7 +73,7 @@ const battingColumns: Column<BattingLeader>[] = [
 
 const bowlingColumns: Column<BowlingLeader>[] = [
   { key: 'rank', header: '#', align: 'right', cell: (r) => r.rank },
-  { key: 'player', header: 'Bowler', cell: (r) => <PlayerLink player={r.player} /> },
+  { key: 'player', header: 'Bowler', cell: (r) => <PlayerLink player={r.player} avatar /> },
   {
     key: 'value',
     header: 'Value',
@@ -122,6 +131,7 @@ function SharedFilters({ state }: { state: StatsFilterState }) {
         onChange={({ from, to }) => url.update({ season: undefined, seasonFrom: from, seasonTo: to })}
       />
       <TeamFilter value={filters.team} onChange={(team) => url.update({ team })} />
+      <VenueFilter value={filters.venue} onChange={(venue) => url.update({ venue })} />
     </>
   );
 }
@@ -180,6 +190,7 @@ function BattingBoard({ state }: { state: StatsFilterState }) {
         seasonFrom: state.query.seasonFrom,
         seasonTo: state.query.seasonTo,
         team: state.query.team,
+        venue: state.query.venue,
         metric,
         minimumBalls,
         limit,
@@ -239,6 +250,7 @@ function BowlingBoard({ state }: { state: StatsFilterState }) {
         seasonFrom: state.query.seasonFrom,
         seasonTo: state.query.seasonTo,
         team: state.query.team,
+        venue: state.query.venue,
         metric,
         minimumOvers,
         limit,
@@ -298,6 +310,7 @@ interface BoardProps<T> {
 const CHART_ROWS = 15;
 
 function Board<T>({ query, metricLabel, columns, rowKey, name, value, caption }: BoardProps<T>) {
+  const navigate = useNavigate();
   return (
     <QueryContent
       query={query}
@@ -310,7 +323,13 @@ function Board<T>({ query, metricLabel, columns, rowKey, name, value, caption }:
         <div className="grid gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
           <Card>
             <CardContent className="pt-4 sm:pt-5">
-              <DataTable caption={caption} columns={columns} rows={rows} rowKey={rowKey} />
+              <DataTable
+                caption={caption}
+                columns={columns}
+                rows={rows}
+                rowKey={rowKey}
+                exportFileName={caption}
+              />
             </CardContent>
           </Card>
           <ChartCard
@@ -323,6 +342,10 @@ function Board<T>({ query, metricLabel, columns, rowKey, name, value, caption }:
               categories={rows.slice(0, CHART_ROWS).map(name)}
               series={[{ name: metricLabel, data: rows.slice(0, CHART_ROWS).map(value) }]}
               ariaLabel={`${caption}, top ${Math.min(rows.length, CHART_ROWS)}`}
+              onItemClick={(index) => {
+                const row = rows[index];
+                if (row !== undefined) navigate(`/players/${rowKey(row)}`);
+              }}
             />
           </ChartCard>
         </div>

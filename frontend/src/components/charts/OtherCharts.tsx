@@ -1,5 +1,5 @@
 import { EmptyState } from '@/components/states/EmptyState';
-import { axisStyle, baseOption, SERIES_COLORS, useChartOption } from './chartTheme';
+import { axisStyle, baseOption, legendStyle, SERIES_COLORS, useChartOption } from './chartTheme';
 import { EChart } from './EChart';
 
 interface PieChartProps {
@@ -7,9 +7,11 @@ interface PieChartProps {
   ariaLabel: string;
   height?: number;
   donut?: boolean;
+  /** Drill-down: called with the clicked slice's name. */
+  onItemClick?: (name: string) => void;
 }
 
-export function PieChart({ data, ariaLabel, height = 280, donut = true }: PieChartProps) {
+export function PieChart({ data, ariaLabel, height = 280, donut = true, onItemClick }: PieChartProps) {
   const option = useChartOption(
     (theme) => ({
       ...baseOption(theme, ariaLabel),
@@ -18,7 +20,7 @@ export function PieChart({ data, ariaLabel, height = 280, donut = true }: PieCha
         trigger: 'item',
         formatter: '{b}: {c} ({d}%)',
       },
-      legend: { bottom: 0, textStyle: { color: theme.text } },
+      legend: { bottom: 0, ...legendStyle(theme) },
       series: [
         {
           type: 'pie',
@@ -32,7 +34,14 @@ export function PieChart({ data, ariaLabel, height = 280, donut = true }: PieCha
     [data, ariaLabel, donut],
   );
   if (!data.some((d) => (d.value ?? 0) > 0)) return <EmptyState />;
-  return <EChart option={option} height={height} ariaLabel={ariaLabel} />;
+  return (
+    <EChart
+      option={option}
+      height={height}
+      ariaLabel={ariaLabel}
+      onItemClick={onItemClick ? (event) => onItemClick(event.name) : undefined}
+    />
+  );
 }
 
 interface RadarChartProps {
@@ -48,7 +57,7 @@ export function RadarChart({ indicators, series, ariaLabel, height = 320 }: Rada
     (theme) => ({
       ...baseOption(theme, ariaLabel),
       tooltip: { ...(baseOption(theme, ariaLabel).tooltip as object), trigger: 'item' },
-      legend: { bottom: 0, textStyle: { color: theme.text } },
+      legend: { bottom: 0, ...legendStyle(theme) },
       radar: {
         indicator: indicators,
         axisName: { color: theme.mutedText },

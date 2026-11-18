@@ -101,6 +101,32 @@ public final class CricketMetrics {
         return (legalBalls / 6) + "." + (legalBalls % 6);
     }
 
+    /** A value computed in SQL (median, standard deviation) at display scale; null stays null. */
+    public static BigDecimal round(Number value) {
+        return value == null ? null : new BigDecimal(value.toString()).setScale(SCALE, ROUNDING);
+    }
+
+    /**
+     * Coefficient of variation, 100 x standard deviation / mean (docs/metrics.md section 10). Lower is more
+     * consistent. Null when the deviation is undefined (fewer than two values) or the mean is zero.
+     */
+    public static BigDecimal coefficientOfVariation(Number standardDeviation, Number mean) {
+        if (standardDeviation == null || mean == null) {
+            return null;
+        }
+        BigDecimal average = new BigDecimal(mean.toString());
+        if (average.signum() == 0) {
+            return null;
+        }
+        return new BigDecimal(standardDeviation.toString()).multiply(BigDecimal.valueOf(100))
+                .divide(average, SCALE, ROUNDING);
+    }
+
+    /** Signed change from one value to another for comparisons; null when either is unknown. */
+    public static BigDecimal change(BigDecimal from, BigDecimal to) {
+        return from == null || to == null ? null : to.subtract(from).setScale(SCALE, ROUNDING);
+    }
+
     /** Mirrors SQL {@code round(numerator / nullif(denominator, 0), 2)}: null only when the denominator is 0. */
     private static BigDecimal ratio(long numerator, long denominator) {
         if (denominator == 0) {

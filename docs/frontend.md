@@ -187,3 +187,124 @@ Pages never call `fetch`. The API modules unwrap the `{data, pagination, meta}` 
   PostgreSQL, without duplicating the backend's integration tests. Not part of CI because it needs a loaded
   database.
 - CI runs lint, format check, typecheck, unit/page tests and the production build.
+
+## 9. V1.6: advanced analytics and UX
+
+**New views**
+
+| Route | What it shows |
+|---|---|
+| `/insights` (toss impact), `/insights/chasing`, `/insights/phases`, `/insights/seasons` | League-wide insights hub with the shared filters (seasons, team, opponent, venue). Season comparison picks 2 to 10 seasons (`?compare=2008,2026`) and shows the backend's change from first to last, plus scoring, phase, boundary and toss trends. |
+| `/teams/:id/phases`, `/teams/:id/toss` | Team batting vs bowling by phase; recent form (last 10 results as W/L/T/NR badges), wins batting first vs chasing by season, and the team's toss record. |
+| `/players/:id/consistency` | Median score, spread, coefficient of variation, 30+/50+/under-10 shares, score distribution and recent form; bowling equivalents. |
+| `/compare` (extended) | Consistency table, strike rate or economy by phase, season trend per player and a profile radar. |
+| `/head-to-head` (extended) | Meetings by venue, both franchises' overall records over the same seasons, phases and toss in their meetings. |
+| `/venues/:id` (extended) | Franchise records at the venue, top run scorers and wicket takers there, toss and phases at the venue. |
+| `/` (extended) | "Season at a glance": average score, run rate, sixes per match and batting-first win %, each with the change from the previous season (computed by the backend) and a sparkline across seasons. |
+
+**Interaction**
+
+- **Drill-down**: chart items navigate. Top players and leaderboard bars open the player, franchise and venue bars
+  open the team or venue, team and head-to-head season bars open the filtered match list, and recent-form bars open
+  the match. `EChart` reports clicks (`onItemClick`); chart components translate them to the clicked category.
+  Every drill-down chart has an equivalent table or link list for keyboard and screen-reader users.
+- **Cross-filtering**: clicking a season in a by-season chart (dashboard, insights, venue, phases) writes `season`
+  to the URL, so every query on the page refocuses together. Back undoes it.
+- **Filters**: removable chips show the active filters; quick ranges ("Last season", "Last 3", "Last 5") set the
+  season range from the latest season.
+- **Charts**: zoom and pan (`zoom` prop, ECharts dataZoom) on long series; "Save as image" in every chart.
+
+**CSV export**
+
+- Every `DataTable` has "Export CSV", which saves the rows exactly as displayed (header titles, cell text).
+  Thousands separators and "–" are undone, so spreadsheets read numbers. Opt out with `exportFileName={false}`.
+- Players and matches also offer "Export all N", which fetches every filtered page (100 rows a request, through
+  TanStack Query) up to 2,000 rows and writes raw API values (`features/exportColumns.ts`).
+- `lib/csv.ts` follows RFC 4180 with a UTF-8 byte-order mark, and prefixes text starting with `= + - @` with `'` so a
+  spreadsheet never runs it as a formula (numbers are left alone).
+
+**Data handling**
+
+- The HTTP client turns API `null`s into absent fields (`withoutNulls`), so runtime values match the generated
+  types, where nullable fields are optional. This fixed "null–149"-style labels on real data.
+
+**Tests added**: insight tabs (success, empty, error, team split, URL resolution), cross-filtering, filter chips and
+presets, team phases and toss & form (with drill-down), player consistency (drill-down to a match), comparison and
+head-to-head extensions, venue insights, dashboard trends and drill-down, leaderboard venue filter and drill-down,
+CSV (field escaping, table export, export-all across pages), the null normalizer, and EChart click wiring. The
+contract check covers the new endpoints, including a cross-check that runs by phase add up to the season totals.
+
+## 10. V1.7: premium UI/UX
+
+V1.7 is a presentation release: no API, analytics or backend change. Pages still only display values the API
+returns.
+
+### Design system
+
+| Piece | Where | What it does |
+|---|---|---|
+| Brand tokens | `styles/index.css` | `--brand-from` / `--brand-to` (blue → orange) per theme, `--shadow-elevated`; utilities `bg-brand-gradient`, `text-brand-gradient`, `card-interactive` (hover lift and shadow), `hero-bar` / `hero-glow`. |
+| Motion | `styles/index.css` | `animate-fade-up` (page and hero entry), `animate-slide-in` (mobile menu), shimmer on every `Skeleton`. All animations and transitions are cut to ~0 under `prefers-reduced-motion`. |
+| Cards | `components/ui/card.tsx` | Rounded-xl surfaces; `StatCard` gains an icon chip, larger figures and trend pills (up = primary, down = orange, flat = muted; the arrow carries the meaning, not colour alone). |
+| Theme | `ThemeProvider` (unchanged) | Light, dark or system; every new component uses theme tokens, chart colours follow the resolved theme. |
+
+### Reusable components (new)
+
+| Component | Use |
+|---|---|
+| `components/media/TeamLogo` | Franchise logo: the configured image if any, else an original shield crest in the team's colours (`xs`–`xl`). Decorative unless given a `label`. |
+| `components/media/PlayerAvatar` | Player photo (lazy, async-decoded, fixed size, falls back on error) or initials on the latest team's colours. Always decorative: the name is next to it. |
+| `components/layout/EntityHero` | Header of team, player, match, venue and dashboard pages: breadcrumbs, media, eyebrow, `h1`, badges, actions and a strip of headline figures, tinted with the subject's colours. |
+| `components/cards/EntityCards` | `TeamCard`, `PlayerCard` (leader tile), `MatchCard` (both scores, winner emphasised, stage badge), `VenueCard`, `CardGrid`. Whole card is one link (no nested links). |
+| `components/cards/RivalryBanner` | Head-to-head: crests, win counts and a bar split by share of wins. |
+| `components/ui/segmented` | `SegmentedControl` (`aria-pressed` toggle group), e.g. cards / table view. |
+| `components/loading/Skeletons` | `CardGridSkeleton` for card grids. |
+| `EntityLinks` | `TeamLink logo` and `PlayerLink avatar` add a crest / avatar inline in tables. |
+
+### Player and team imagery
+
+- **Team branding** lives in `config/media/teamBranding.ts`, keyed by franchise code (the codes of
+  `backend/src/main/resources/reference/franchises.csv`): kit colours plus optional `logoUrl`. Official logos are
+  trademarks and are not bundled; the default is an original monogram crest. To use licensed logos, put files under
+  `frontend/public/media/teams/` and set `logoUrl`.
+- **Player photos** are resolved by `config/media/playerImages.ts` from the Cricsheet player id (`sourceId`, stable
+  across database rebuilds): first `PLAYER_IMAGE_OVERRIDES`, then the build-time template
+  `VITE_PLAYER_IMAGE_URL_TEMPLATE` (e.g. `/media/players/{sourceId}.webp` or a CDN URL). Components never contain
+  image URLs. No photos ship by default (licensing), so every player shows an initials avatar.
+- **Performance:** images are `loading="lazy"`, `decoding="async"` and have explicit width/height (no layout shift);
+  a failed URL is remembered per component so it is not retried in a loop. Crests and initials are inline SVG/CSS:
+  no request at all.
+- References that carry only `{id, name}` (leaderboards, season leaders) have no `sourceId`, so they always use
+  initials.
+- **CSV export** of tables skips `aria-hidden` content, so avatars and crests never leak into exported cells.
+
+### Reworked pages
+
+| Page | Change |
+|---|---|
+| Layout | Gradient brand mark, active-item indicator, data credit in the sidebar; translucent sticky header with a season jump ("Go to season") and the theme toggle; animated mobile menu with a blurred backdrop; pages fade in on navigation (tabs inside a page do not re-animate). |
+| Dashboard | Hero with the season selector; KPI cards; champion card with crest; highest team / individual score; Orange cap, Purple cap, strike-rate and economy leader cards; latest results as match cards. |
+| Teams | Current and former franchises as team cards (crest, record, win-rate bar), all-time records table below. |
+| Team / player / venue / match detail | `EntityHero` with crest or avatar and headline figures (team: record and titles from the seasons API; player: runs, average, strike rate, high score, wickets, economy, sharing the overview tab's queries and filters; match: scoreboard with both innings). |
+| Matches | Cards (default) or table, chosen with a segmented control and kept in the URL (`view=table`). |
+| Head-to-head | Rivalry banner above the figures. |
+| Comparison | Selected players as avatar tiles in their team colours. |
+| Players, leaderboards, seasons, match tables | Avatars and crests next to names. |
+
+### Charts
+
+Tooltips have padding, rounded corners, a theme-aware shadow and a dashed axis pointer; legends use rounded
+markers with muted text; bars have rounded ends (unstacked), lines are 2.5 px with markers hidden on long series;
+animations ease out.
+
+### Responsive behaviour
+
+Card grids go 1 → 2 → 3 → 4 columns; hero figure strips 2 → 3 → 4–6 columns; the header season jump and theme
+toggle stay usable at 375 px; tables keep horizontal scrolling; the mobile menu slides in over a blurred backdrop.
+
+### Tests
+
+`components/premiumUi.test.tsx` (media configuration, crest/avatar fallback, entity cards, hero, rivalry banner,
+segmented control, CSV without decorative content, teams grid, matches view switch, team hero titles, header season
+jump) and `components/media/PlayerAvatar.test.tsx` (lazy photo and fallback on error). Page tests updated where the
+hero now repeats a figure the overview tab also shows.

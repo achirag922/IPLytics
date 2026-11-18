@@ -49,6 +49,16 @@ export const routes: RouteObject[] = [
             path: 'head-to-head',
             lazy: () => import('@/features/teams/TeamTabs').then((m) => ({ Component: m.TeamHeadToHeadTab })),
           },
+          {
+            path: 'phases',
+            lazy: () =>
+              import('@/features/teams/TeamInsightTabs').then((m) => ({ Component: m.TeamPhasesTab })),
+          },
+          {
+            path: 'toss',
+            lazy: () =>
+              import('@/features/teams/TeamInsightTabs').then((m) => ({ Component: m.TeamTossTab })),
+          },
         ],
       },
 
@@ -90,6 +100,13 @@ export const routes: RouteObject[] = [
             path: 'venues',
             lazy: () =>
               import('@/features/players/PlayerTabs').then((m) => ({ Component: m.PlayerVenuesTab })),
+          },
+          {
+            path: 'consistency',
+            lazy: () =>
+              import('@/features/players/PlayerConsistencyTab').then((m) => ({
+                Component: m.PlayerConsistencyTab,
+              })),
           },
         ],
       },
@@ -151,6 +168,28 @@ export const routes: RouteObject[] = [
         path: 'leaderboards',
         lazy: () =>
           import('@/features/leaderboards/LeaderboardsPage').then((m) => ({ Component: m.LeaderboardsPage })),
+      },
+      {
+        path: 'insights',
+        lazy: () => import('@/features/insights/InsightsPage').then((m) => ({ Component: m.InsightsPage })),
+        children: [
+          {
+            index: true,
+            lazy: () => import('@/features/insights/InsightsTabs').then((m) => ({ Component: m.TossTab })),
+          },
+          {
+            path: 'chasing',
+            lazy: () => import('@/features/insights/InsightsTabs').then((m) => ({ Component: m.ChasingTab })),
+          },
+          {
+            path: 'phases',
+            lazy: () => import('@/features/insights/InsightsTabs').then((m) => ({ Component: m.PhasesTab })),
+          },
+          {
+            path: 'seasons',
+            lazy: () => import('@/features/insights/InsightsTabs').then((m) => ({ Component: m.SeasonsTab })),
+          },
+        ],
       },
 
       {

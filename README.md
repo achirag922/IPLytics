@@ -2,7 +2,7 @@
 
 A full-stack platform for exploring Indian Premier League data: team, player, match, venue and season analytics, head-to-heads, player comparisons and advanced batting and bowling analysis.
 
-> **Status: V1.5 (React analytics dashboard).** Cricsheet IPL 2008–2026 data flows from source to staging, into a normalized `core` schema and a reconciled `analytics` layer, is served by a documented read-only REST API under `/api/v1`, and is explored in a React dashboard (teams, players, matches with scorecards and worm/Manhattan charts, venues, seasons, head-to-head, comparisons, matchups, leaderboards). See the [roadmap](#roadmap).
+> **Status: V1.7 (premium UI & UX).** Cricsheet IPL 2008–2026 data flows from source to staging, into a normalized `core` schema and a reconciled `analytics` layer, is served by a documented read-only REST API under `/api/v1`, and is explored in a React dashboard (teams, players, matches with scorecards and worm/Manhattan charts, venues, seasons, head-to-head, comparisons, matchups, leaderboards) with toss, chasing, phase, season-comparison and consistency insights, drill-down charts, cross-filtering, CSV export, and a polished sports-dashboard design (team crests, player avatars, entity heroes, match cards, dark mode). See the [roadmap](#roadmap).
 
 ## Tech stack
 
@@ -201,6 +201,8 @@ docs/adr/           Architecture Decision Records
 | **V1.3** ✅ | Analytics layer: batting/bowling/innings/team-match views, formula functions mirrored by CricketMetrics, phases, concurrent audited refresh, team/player/venue/head-to-head/leaderboard queries |
 | **V1.4** ✅ | REST API: seasons, points tables, teams, venues, players, matches with scorecards and progression, head-to-head, comparisons, matchups, leaderboards; OpenAPI contract, problem-detail errors, ETag caching |
 | **V1.5** ✅ | React analytics dashboard: dashboard, teams, players, matches (scorecard, worm, Manhattan), venues, seasons, head-to-head, comparison, matchups, leaderboards; URL filters, generated API types, page tests with MSW, frontend/backend contract check |
-| V1.6+ | Hardening |
+| **V1.6** ✅ | Advanced analytics & UX: insights hub (toss impact, batting first vs chasing, phases, season comparison), team phases and toss & form, player consistency, richer comparison, head-to-head and venue insights, drill-down and cross-filtering charts, CSV export |
+| **V1.7** ✅ | Premium UI & UX: design tokens and motion, team crests and configurable player photos, entity heroes, team/player/match/venue cards, rivalry banner, redesigned dashboard, cards/table views, chart polish, responsive layout |
+| V1.8+ | Hardening |
 | V2 | Incremental ETL pipeline, data-quality reports |
 | V3+ | Redis, Kafka (live data), AI insights, predictions |

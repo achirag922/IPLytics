@@ -1,17 +1,20 @@
 import { useQueries } from '@tanstack/react-query';
 import { X } from 'lucide-react';
 import { useMemo } from 'react';
+import { useNavigate } from 'react-router';
+import { ComparisonExtras } from './ComparisonExtras';
 import type { ComparedPlayer, ComparisonQuery, Discipline } from '@/api/analyticsApi';
 import { playersApi } from '@/api/playersApi';
 import { PlayerLink } from '@/components/cards/EntityLinks';
 import { BarChart, ChartCard } from '@/components/charts';
 import { FilterBar, PlayerPicker, SeasonRangeFilter, SelectFilter } from '@/components/filters';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PlayerAvatar } from '@/components/media/PlayerAvatar';
+import { teamBranding } from '@/config/media/teamBranding';
 import { TableSkeleton } from '@/components/loading/Skeletons';
 import { EmptyState } from '@/components/states/EmptyState';
 import { QueryContent } from '@/components/states/QueryContent';
 import { DataTable } from '@/components/tables/DataTable';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePlayerComparisonQuery } from '@/hooks/useAnalyticsQueries';
@@ -67,6 +70,7 @@ const METRICS: Record<Discipline, Metric[]> = {
 
 export function ComparePage() {
   const url = useUrlState();
+  const navigate = useNavigate();
   const ids = url.getNumbers('ids').slice(0, MAX_COMPARED_PLAYERS);
   const discipline: Discipline = url.get('discipline') === 'bowling' ? 'bowling' : 'batting';
   const seasonFrom = url.getNumber('seasonFrom');
@@ -119,23 +123,42 @@ export function ComparePage() {
       </FilterBar>
 
       {ids.length > 0 && (
-        <ul aria-label="Selected players" className="mb-4 flex flex-wrap gap-2">
-          {ids.map((id, index) => (
-            <li key={id}>
-              <Badge variant="outline" className="gap-1 py-1 pl-2 pr-1 text-sm">
-                {names[index]?.data?.name ?? `Player ${id}`}
+        <ul aria-label="Selected players" className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {ids.map((id, index) => {
+            const detail = names[index]?.data;
+            const spells = detail?.teams ?? [];
+            const latest = spells[spells.length - 1]?.team;
+            const brand = teamBranding(latest?.code, detail?.name);
+            return (
+              <li
+                key={id}
+                className="animate-fade-up relative flex items-center gap-3 overflow-hidden rounded-xl border bg-card p-3 shadow-sm"
+              >
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-y-0 left-0 w-1"
+                  style={{ background: `linear-gradient(${brand.primary}, ${brand.secondary})` }}
+                />
+                <PlayerAvatar player={detail} teamCode={latest?.code} size="md" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold">{detail?.name ?? `Player ${id}`}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {latest?.name ?? '–'}
+                    {detail && ` · ${detail.firstSeason}–${detail.lastSeason}`}
+                  </p>
+                </div>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="size-5"
-                  aria-label={`Remove ${names[index]?.data?.name ?? `player ${id}`}`}
+                  className="size-7"
+                  aria-label={`Remove ${detail?.name ?? `player ${id}`}`}
                   onClick={() => setIds(ids.filter((x) => x !== id))}
                 >
                   <X aria-hidden="true" />
                 </Button>
-              </Badge>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       )}
 
@@ -199,6 +222,10 @@ export function ComparePage() {
                       },
                     ]}
                     ariaLabel={`${keyMetric} of the selected players`}
+                    onItemClick={(index) => {
+                      const id = players[index]?.player?.id;
+                      if (id !== undefined) navigate(`/players/${id}`);
+                    }}
                   />
                 </ChartCard>
                 <ChartCard
@@ -222,6 +249,14 @@ export function ComparePage() {
                   />
                 </ChartCard>
               </div>
+              <ComparisonExtras
+                players={players
+                  .map((p) => p.player)
+                  .filter((p): p is NonNullable<typeof p> => p !== undefined)}
+                discipline={discipline}
+                seasonFrom={seasonFrom}
+                seasonTo={seasonTo}
+              />
             </div>
           );
         }}

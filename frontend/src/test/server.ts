@@ -80,7 +80,20 @@ export const handlers = [
   http.get(api('/venues/:id/stats'), () => envelope(f.venueStats)),
   http.get(api('/venues/:id/seasons'), () => envelope(f.venueSeasons)),
   http.get(api('/venues/:id/score-distribution'), () => envelope(f.scoreBands)),
-  http.get(api('/head-to-head'), () => envelope(f.headToHead)),
+  http.get(api('/head-to-head'), () => envelope({ ...f.headToHead, byVenue: f.headToHeadByVenue })),
+  http.get(api('/insights/toss'), ({ request }) =>
+    envelope(f.tossInsights(new URL(request.url).searchParams.has('team') ? f.MI : undefined)),
+  ),
+  http.get(api('/insights/batting-first'), () => envelope(f.battingFirstInsights)),
+  http.get(api('/insights/phases'), ({ request }) =>
+    envelope(f.phaseInsights(new URL(request.url).searchParams.has('team'))),
+  ),
+  http.get(api('/insights/seasons'), ({ request }) => {
+    const list = new URL(request.url).searchParams.get('seasons');
+    return envelope(f.seasonComparison(list ? list.split(',').map(Number) : [2025, 2026]));
+  }),
+  http.get(api('/players/:id/consistency'), () => envelope(f.consistency)),
+  http.get(api('/venues/:id/teams'), () => envelope(f.venueTeams)),
   http.get(api('/matchups'), () => envelope(f.matchup)),
   http.get(api('/leaderboards/batting'), () => envelope(f.battingLeaders)),
   http.get(api('/leaderboards/bowling'), () => envelope(f.bowlingLeaders)),

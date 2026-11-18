@@ -10,6 +10,12 @@ import { DataTable, type Column } from '@/components/tables/DataTable';
 import { PaginationControls } from '@/components/tables/PaginationControls';
 import { Card, CardContent } from '@/components/ui/card';
 import { usePlayersQuery } from '@/hooks/usePlayerQueries';
+import { playersApi } from '@/api/playersApi';
+import { ExportAllButton } from '@/components/tables/ExportAllButton';
+import { PLAYER_CSV_COLUMNS } from '@/features/exportColumns';
+import { useExportAll } from '@/hooks/useExportAll';
+import { csvFileName } from '@/lib/csv';
+import { queryKeys } from '@/lib/queryKeys';
 import { useStatsFilters } from '@/hooks/useStatsFilters';
 import { formatDecimal, formatInteger } from '@/lib/format';
 
@@ -30,8 +36,8 @@ const isSort = (v: string | undefined): v is Sort => SORTS.some((s) => s.value =
 const isDiscipline = (v: string | undefined): v is Discipline => DISCIPLINES.some((d) => d.value === v);
 
 const columns: Column<PlayerListItem>[] = [
-  { key: 'player', header: 'Player', cell: (p) => <PlayerLink player={p} /> },
-  { key: 'team', header: 'Team', cell: (p) => <TeamLink team={p.team} short /> },
+  { key: 'player', header: 'Player', cell: (p) => <PlayerLink player={p} avatar teamCode={p.team?.code} /> },
+  { key: 'team', header: 'Team', cell: (p) => <TeamLink team={p.team} short logo /> },
   {
     key: 'span',
     header: 'Seasons',
@@ -75,6 +81,12 @@ export function PlayersPage() {
     [state.query, search, discipline, sort, page],
   );
   const players = usePlayersQuery(query);
+  const exporter = useExportAll({
+    queryKey: queryKeys.players.list({ ...query, page: undefined, size: undefined }),
+    fetchPage: (page, size, signal) => playersApi.list({ ...query, page, size }, signal),
+    columns: PLAYER_CSV_COLUMNS,
+    fileName: csvFileName('players', { search, season: filters.season, team: filters.team, discipline }),
+  });
   const anyFilter = ['search', 'season', 'seasonFrom', 'seasonTo', 'team', 'discipline', 'sort'].some((k) =>
     url.get(k),
   );
@@ -146,6 +158,8 @@ export function PlayersPage() {
                   rows={d.items}
                   rowKey={(p) => p.id}
                   rowHref={(p) => `/players/${p.id}`}
+                  exportFileName="players page"
+                  toolbar={<ExportAllButton exporter={exporter} total={d.pagination.totalElements} />}
                 />
                 <PaginationControls
                   pagination={d.pagination}

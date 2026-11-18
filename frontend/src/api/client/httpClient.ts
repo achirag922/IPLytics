@@ -84,5 +84,23 @@ export async function apiGet<T>(path: string, params?: QueryParams, signal?: Abo
       problem,
     );
   }
-  return (await response.json()) as T;
+  return withoutNulls(await response.json()) as T;
+}
+
+/**
+ * The API sends missing values as null, while the generated types declare nullable fields as optional. Dropping
+ * null fields (and turning null array items into undefined) makes runtime values match the types, so one check
+ * (`=== undefined` or `??`) handles every missing value.
+ */
+export function withoutNulls(value: unknown): unknown {
+  if (value === null) return undefined;
+  if (Array.isArray(value)) return value.map(withoutNulls);
+  if (typeof value === 'object') {
+    const result: Record<string, unknown> = {};
+    for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
+      if (item !== null) result[key] = withoutNulls(item);
+    }
+    return result;
+  }
+  return value;
 }

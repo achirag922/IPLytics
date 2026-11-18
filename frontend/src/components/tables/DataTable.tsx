@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { EmptyState } from '@/components/states/EmptyState';
 import {
@@ -10,7 +11,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { csvFileName, downloadCsv, tableToCsv } from '@/lib/csv';
 import { cn } from '@/lib/utils';
+import { ExportCsvButton } from './ExportCsvButton';
 
 export interface Column<T> {
   key: string;
@@ -34,6 +37,13 @@ interface DataTableProps<T> {
   emptyTitle?: string;
   emptyDescription?: string;
   className?: string;
+  /**
+   * File name (without extension) for the "Export CSV" button, which saves the rows exactly as displayed. Defaults
+   * to the caption; false hides the button.
+   */
+  exportFileName?: string | false;
+  /** Extra actions shown next to the export button (e.g. "Export all"). */
+  toolbar?: ReactNode;
 }
 
 const alignClass = { left: 'text-left', right: 'text-right', center: 'text-center' } as const;
@@ -48,11 +58,18 @@ export function DataTable<T>({
   emptyTitle = 'No data available',
   emptyDescription,
   className,
+  exportFileName,
+  toolbar,
 }: DataTableProps<T>) {
   const navigate = useNavigate();
+  const tableRef = useRef<HTMLTableElement>(null);
+  const exportName = exportFileName === false ? undefined : (exportFileName ?? caption);
   if (rows.length === 0) return <EmptyState title={emptyTitle} description={emptyDescription} />;
-  return (
-    <Table className={className}>
+  const exportRows = () => {
+    if (tableRef.current) downloadCsv(csvFileName(exportName ?? caption), tableToCsv(tableRef.current));
+  };
+  const table = (
+    <Table ref={tableRef} className={className}>
       <TableCaption className={showCaption ? undefined : 'sr-only'}>{caption}</TableCaption>
       <TableHeader>
         <TableRow className="hover:bg-transparent">
@@ -102,5 +119,15 @@ export function DataTable<T>({
         })}
       </TableBody>
     </Table>
+  );
+  if (!exportName && !toolbar) return table;
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        {toolbar}
+        {exportName && <ExportCsvButton onExport={exportRows} />}
+      </div>
+      {table}
+    </div>
   );
 }

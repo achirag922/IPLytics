@@ -54,3 +54,14 @@ describe('http client', () => {
     expect((error as ApiError).kind).toBe('network');
   });
 });
+
+describe('API null handling', () => {
+  it('drops null fields so values match the generated optional types', async () => {
+    const { withoutNulls } = await import('@/api/client/httpClient');
+    expect(withoutNulls({ a: 1, b: null, c: [{ d: null, e: 2 }, null], f: { g: null } })).toEqual({
+      a: 1,
+      c: [{ e: 2 }, undefined],
+      f: {},
+    });
+  });
+});

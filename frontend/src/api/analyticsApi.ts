@@ -16,6 +16,15 @@ export type HeadToHeadQuery = QueryOf<'/api/v1/head-to-head'>;
 export type ComparisonQuery = QueryOf<'/api/v1/players/compare'>;
 export type Discipline = NonNullable<ComparisonQuery['discipline']>;
 export type MatchupQuery = QueryOf<'/api/v1/matchups'>;
+export type TossInsights = Schemas['TossInsightsDto'];
+export type BattingFirstInsights = Schemas['BattingFirstInsightsDto'];
+export type PhaseInsights = Schemas['PhaseInsightsDto'];
+export type PhaseRow = Schemas['PhaseRowDto'];
+export type SeasonComparison = Schemas['SeasonComparisonDto'];
+export type SeasonInsight = Schemas['SeasonInsightDto'];
+/** Insight scope: season range, team, opponent, venue (same for toss, batting first and phases). */
+export type InsightQuery = QueryOf<'/api/v1/insights/toss'>;
+export type SeasonComparisonQuery = QueryOf<'/api/v1/insights/seasons'>;
 
 /** Cross-cutting analytics: data-set overview, leaderboards, rivalries, comparisons and matchups. */
 export const analyticsApi = {
@@ -29,4 +38,12 @@ export const analyticsApi = {
   compare: (query: ComparisonQuery, signal?: AbortSignal) =>
     getData<Comparison>('/players/compare', query, signal),
   matchup: (query: MatchupQuery, signal?: AbortSignal) => getData<Matchup>('/matchups', query, signal),
+  tossInsights: (query: InsightQuery, signal?: AbortSignal) =>
+    getData<TossInsights>('/insights/toss', query, signal),
+  battingFirstInsights: (query: InsightQuery, signal?: AbortSignal) =>
+    getData<BattingFirstInsights>('/insights/batting-first', query, signal),
+  phaseInsights: (query: InsightQuery, signal?: AbortSignal) =>
+    getData<PhaseInsights>('/insights/phases', query, signal),
+  seasonComparison: (query: SeasonComparisonQuery, signal?: AbortSignal) =>
+    getData<SeasonComparison>('/insights/seasons', query, signal),
 };

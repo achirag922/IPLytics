@@ -16,6 +16,12 @@ public class AnalyticsReconciler {
 
     /** (expected, actual) pairs recomputed from core. */
     private static final List<String[]> EQUALITIES = List.of(
+            new String[] {"Innings phases add up to innings totals (runs, extras, legal balls, wickets, fours, sixes)",
+                    "select concat_ws('/', sum(total_runs), sum(extras), sum(legal_balls), sum(wickets), sum(fours), sum(sixes)) from analytics.innings_summary",
+                    "select concat_ws('/', sum(runs), sum(extras), sum(legal_balls), sum(wickets), sum(fours), sum(sixes)) from analytics.innings_phase"},
+            new String[] {"Innings phases cover every innings with a delivery",
+                    "select count(*) from analytics.innings_summary",
+                    "select count(distinct innings_id) from analytics.innings_phase"},
             new String[] {"Innings summaries = core innings",
                     "select count(*) from core.innings", "select count(*) from analytics.innings_summary"},
             new String[] {"Innings summary runs, extras, legal balls and wickets = core",
@@ -72,6 +78,7 @@ public class AnalyticsReconciler {
                     select 'batting ' || innings_id || '/' || player_id from analytics.batting_innings group by innings_id, player_id having count(*) > 1
                     union all select 'bowling ' || innings_id || '/' || player_id from analytics.bowling_innings group by innings_id, player_id having count(*) > 1
                     union all select 'innings ' || innings_id from analytics.innings_summary group by innings_id having count(*) > 1
+                    union all select 'phase ' || innings_id || '/' || phase from analytics.innings_phase group by innings_id, phase having count(*) > 1
                     union all select 'team ' || match_id || '/' || team_id from analytics.team_match_result group by match_id, team_id having count(*) > 1"""},
             new String[] {"No orphan keys in analytics", """
                     select 'batting player ' || b.player_id from analytics.batting_innings b

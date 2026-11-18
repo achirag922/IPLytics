@@ -18,6 +18,7 @@ core (V1.2)  →  analytics schema: SQL formula functions + views + materialized
 | `analytics.batting_innings` | **materialized** | one player × one innings | Aggregates all deliveries, computes batting order, picks the dismissal |
 | `analytics.bowling_innings` | **materialized** | one player × one innings | Aggregates all deliveries and credited wickets |
 | `analytics.team_match_result` | view | one team × one match | Only 2 rows per match, read from `innings_summary` + `core.match`; cheap to compute on demand |
+| `analytics.innings_phase` (V1.6) | **materialized** | one innings × one phase | Runs, extras, legal balls, wickets, fours, sixes and dot balls per powerplay / middle / death / super over; `team_id` = batting side, `opponent_team_id` = bowling side. Feeds the phase insights |
 | `analytics.refresh_run` | table | one refresh | Audit: status, the transform run used, row counts, checks, warnings |
 
 Rows on real data (IPL 2008–2026): 2,514 innings summaries, 19,196 batting innings, 14,734 bowling innings and
@@ -123,7 +124,7 @@ ratio only to **rank** (leaderboards), and then always through these functions. 
   - `java -jar iplytics.jar --spring.profiles.active=analytics`, run after the transform;
   - or the whole pipeline: `--spring.profiles.active=ingest,transform,analytics`.
 - **What happens:** `AnalyticsRefreshService` runs, in **one transaction** holding an advisory lock:
-  1. `REFRESH MATERIALIZED VIEW CONCURRENTLY`, in the fixed order innings_summary → batting_innings → bowling_innings.
+  1. `REFRESH MATERIALIZED VIEW CONCURRENTLY`, in the fixed order innings_summary → batting_innings → bowling_innings → innings_phase (V1.6).
   2. Reconciliation.
   3. Commit, or roll back if any check fails, leaving the previous analytics in place.
 - **Readers are never blocked** (`CONCURRENTLY`, so a unique grain index exists on every materialized view).
@@ -227,3 +228,17 @@ All parameters are bound, never concatenated.
 - **Impact Player** substitutions aren't modelled (players appear through the playing list).
 - **Super overs** exist in every object with `is_super_over = true`. They're excluded only by the query-layer
   default and by explicit filters, so direct SQL users must filter them themselves.
+
+## 8. V1.6 additions
+
+- **`analytics.innings_phase`** (migration V9): one row per innings and phase, refreshed with the other
+  materialized views. Reconciliation checks that phase runs, extras, legal balls, wickets, fours and sixes add up to
+  the innings totals in `innings_summary`, that every innings with a delivery has phase rows, and that
+  (innings, phase) is unique. On the full data set: 7,338 rows, refreshed in under a second.
+- **New query classes**: `InsightQueries` (toss impact, batting first vs chasing with target bands, phase totals
+  and phase run rates by season, season comparison) and `ConsistencyQueries` (median, spread and score bands of a
+  player's innings; wicket-taking and economy consistency; last 10 innings). `PlayerTotalsQueries` backs the scoped
+  player list. Team records at a venue were added to `TeamQueries`.
+- Toss and batting-order questions read `team_match_result` (one row per team per match: `toss_won`,
+  `batted_first`, `won`, ...). Phase questions read `innings_phase`. Consistency reads `batting_innings` and
+  `bowling_innings` with `percentile_cont` and `stddev_samp`.

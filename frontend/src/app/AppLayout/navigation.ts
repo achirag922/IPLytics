@@ -3,6 +3,7 @@ import {
   Crosshair,
   GitCompareArrows,
   LayoutDashboard,
+  Lightbulb,
   ListOrdered,
   MapPin,
   Shield,
@@ -37,6 +38,7 @@ export const NAVIGATION: NavGroup[] = [
   {
     label: 'Analytics',
     items: [
+      { label: 'Insights', to: '/insights', icon: Lightbulb },
       { label: 'Head to Head', to: '/head-to-head', icon: Swords },
       { label: 'Player Comparison', to: '/compare', icon: GitCompareArrows },
       { label: 'Matchups', to: '/matchups', icon: Crosshair },

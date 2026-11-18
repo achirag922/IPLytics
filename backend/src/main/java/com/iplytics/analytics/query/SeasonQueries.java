@@ -124,6 +124,17 @@ public class SeasonQueries {
                  order by s.total_runs, s.match_date, s.match_id limit 1""", year);
     }
 
+    /** Winner of each season's Final (season year -> team id), for seasons whose Final had a result. */
+    public Map<Integer, Integer> champions() {
+        Map<Integer, Integer> result = new LinkedHashMap<>();
+        jdbc.query("""
+                select s.year, m.winner_team_id from core.match m join core.season s on s.id = m.season_id
+                 where m.stage = 'Final' and m.winner_team_id is not null""", new MapSqlParameterSource(), rs -> {
+                    result.put(rs.getInt("year"), rs.getInt("winner_team_id"));
+                });
+        return result;
+    }
+
     /** Winner of the season's Final, if there was one with a result. */
     public Optional<Integer> champion(int year) {
         return jdbc.query("""

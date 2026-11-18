@@ -179,6 +179,129 @@ class ApiIT extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.data[6].from").value(220));
     }
 
+    // ---- V1.6 insights (2019 fixture: MI 30/3 in 2.2 overs beat CSK 20/2 in 1.2 overs; CSK won the toss, fielded) --
+
+    @Test
+    void phaseInsightsSplitScoringByPhase() throws Exception {
+        // Powerplay: MI over 1 (16 runs, 1 wkt) + CSK over 1 (16 runs, 1 wkt); 3 fours, 2 sixes, 4 dots in 12 balls.
+        call("/api/v1/insights/phases?season=2019")
+                .andExpect(jsonPath("$.data.batting[*].phase", contains("powerplay", "middle", "death")))
+                .andExpect(jsonPath("$.data.batting[0].innings").value(2))
+                .andExpect(jsonPath("$.data.batting[0].runs").value(32))
+                .andExpect(jsonPath("$.data.batting[0].legalBalls").value(12))
+                .andExpect(jsonPath("$.data.batting[0].runRate").value(16.00))
+                .andExpect(jsonPath("$.data.batting[0].wickets").value(2))
+                .andExpect(jsonPath("$.data.batting[0].boundaryPercentage").value(41.67))
+                .andExpect(jsonPath("$.data.batting[0].dotBallPercentage").value(33.33))
+                .andExpect(jsonPath("$.data.batting[1].runRate").value(8.00))
+                .andExpect(jsonPath("$.data.batting[2].runs").value(10))
+                .andExpect(jsonPath("$.data.batting[2].runRate").value(15.00))
+                .andExpect(jsonPath("$.data.bowling").doesNotExist())
+                .andExpect(jsonPath("$.data.bySeason[0].season").value(2019))
+                .andExpect(jsonPath("$.data.bySeason[0].powerplayRunRate").value(16.00));
+        // With a team: MI's batting and, separately, what MI conceded (CSK: 16 off 6 powerplay balls, 4 off 2 at death).
+        call("/api/v1/insights/phases?season=2019&team=" + mi)
+                .andExpect(jsonPath("$.data.batting[0].runs").value(16))
+                .andExpect(jsonPath("$.data.bowling[0].runs").value(16))
+                .andExpect(jsonPath("$.data.bowling[2].runRate").value(12.00));
+        mvc.perform(get("/api/v1/insights/phases?team=999")).andExpect(status().isUnprocessableEntity());
+    }
+
+    @Test
+    void tossImpact() throws Exception {
+        call("/api/v1/insights/toss?season=2019")
+                .andExpect(jsonPath("$.data.overall.matches").value(1))
+                .andExpect(jsonPath("$.data.overall.tossWinnerWins").value(0))
+                .andExpect(jsonPath("$.data.overall.tossWinnerWinPercentage").value(0.00))
+                .andExpect(jsonPath("$.data.byDecision[0].decision").value("field"))
+                .andExpect(jsonPath("$.data.bySeason[0].season").value(2019))
+                .andExpect(jsonPath("$.data.team").doesNotExist());
+        call("/api/v1/insights/toss?season=2019&team=" + csk)
+                .andExpect(jsonPath("$.data.team.team.code").value("CSK"))
+                .andExpect(jsonPath("$.data.team.tossesWon").value(1))
+                .andExpect(jsonPath("$.data.team.tossWinPercentage").value(100.00))
+                .andExpect(jsonPath("$.data.team.choseToField").value(1))
+                .andExpect(jsonPath("$.data.team.winPercentageAfterTossWin").value(0.00))
+                .andExpect(jsonPath("$.data.team.winPercentageAfterTossLoss").doesNotExist());
+        // Across all fixtures, every match with a toss is counted once.
+        call("/api/v1/insights/toss")
+                .andExpect(jsonPath("$.data.overall.matches").value(id(
+                        "select count(*) from core.match where toss_winner_team_id is not null")));
+    }
+
+    @Test
+    void battingFirstVersusChasing() throws Exception {
+        call("/api/v1/insights/batting-first?season=2019")
+                .andExpect(jsonPath("$.data.overall.decisiveMatches").value(1))
+                .andExpect(jsonPath("$.data.overall.battingFirstWins").value(1))
+                .andExpect(jsonPath("$.data.overall.battingFirstWinPercentage").value(100.00))
+                .andExpect(jsonPath("$.data.overall.averageFirstInningsScore").value(30.00))
+                .andExpect(jsonPath("$.data.byTarget.length()").value(5))
+                .andExpect(jsonPath("$.data.byTarget[0].to").value(149))
+                .andExpect(jsonPath("$.data.byTarget[0].matches").value(1))
+                .andExpect(jsonPath("$.data.byTarget[0].successPercentage").value(0.00))
+                .andExpect(jsonPath("$.data.byTarget[4].from").value(210))
+                .andExpect(jsonPath("$.data.byTarget[4].successPercentage").doesNotExist());
+    }
+
+    @Test
+    void seasonComparison() throws Exception {
+        // 2019: 50 runs in 2 innings off 22 legal balls, 4 fours, 2 sixes, 5 wickets in 1 match.
+        call("/api/v1/insights/seasons?seasons=2019,2023")
+                .andExpect(jsonPath("$.data.seasons[*].season", contains(2019, 2023)))
+                .andExpect(jsonPath("$.data.seasons[0].averageScore").value(25.00))
+                .andExpect(jsonPath("$.data.seasons[0].runRate").value(13.64))
+                .andExpect(jsonPath("$.data.seasons[0].foursPerMatch").value(4.00))
+                .andExpect(jsonPath("$.data.seasons[0].sixesPerMatch").value(2.00))
+                .andExpect(jsonPath("$.data.seasons[0].battingFirstWinPercentage").value(100.00))
+                .andExpect(jsonPath("$.data.seasons[0].tossWinnerWinPercentage").value(0.00))
+                .andExpect(jsonPath("$.data.seasons[0].deathRunRate").value(15.00))
+                .andExpect(jsonPath("$.data.seasons[1].champion.code").value("CSK"))
+                .andExpect(jsonPath("$.data.change.from").value(2019))
+                .andExpect(jsonPath("$.data.change.to").value(2023));
+        call("/api/v1/insights/seasons?seasonFrom=2019&seasonTo=2019")
+                .andExpect(jsonPath("$.data.seasons.length()").value(1))
+                .andExpect(jsonPath("$.data.change").doesNotExist());
+        mvc.perform(get("/api/v1/insights/seasons?seasons=2019")).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void playerConsistency() throws Exception {
+        call("/api/v1/players/" + rohit + "/consistency?season=2019")
+                .andExpect(jsonPath("$.data.batting.innings").value(1))
+                .andExpect(jsonPath("$.data.batting.medianScore").value(13.00))
+                .andExpect(jsonPath("$.data.batting.standardDeviation").doesNotExist())
+                .andExpect(jsonPath("$.data.batting.underTenPercentage").value(0.00))
+                .andExpect(jsonPath("$.data.batting.scoreBands[2].label").value("10-29"))
+                .andExpect(jsonPath("$.data.batting.scoreBands[2].innings").value(1))
+                .andExpect(jsonPath("$.data.batting.recentInnings[0].runs").value(13))
+                .andExpect(jsonPath("$.data.batting.recentInnings[0].opponent.code").value("CSK"))
+                .andExpect(jsonPath("$.data.batting.recentInnings[0].matchId").value(match2019));
+        // Chahar: 1/16 off 8 balls, economy 12.00 (not economical).
+        call("/api/v1/players/" + chahar + "/consistency?season=2019")
+                .andExpect(jsonPath("$.data.bowling.innings").value(1))
+                .andExpect(jsonPath("$.data.bowling.wicketInningsPercentage").value(100.00))
+                .andExpect(jsonPath("$.data.bowling.multiWicketInningsPercentage").value(0.00))
+                .andExpect(jsonPath("$.data.bowling.economicalInningsPercentage").value(0.00))
+                .andExpect(jsonPath("$.data.bowling.recentInnings[0].overs").value("1.2"));
+        mvc.perform(get("/api/v1/players/999999/consistency")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void venueTeamsLeaderboardVenueAndHeadToHeadVenues() throws Exception {
+        call("/api/v1/venues/" + wankhede + "/teams")
+                .andExpect(jsonPath("$.data[*].team.code", contains("MI", "CSK")))
+                .andExpect(jsonPath("$.data[0].won").value(1))
+                .andExpect(jsonPath("$.data[0].winPercentage").value(100.00))
+                .andExpect(jsonPath("$.data[1].averageScore").value(20.00));
+        call("/api/v1/leaderboards/batting?venue=" + wankhede + "&limit=1")
+                .andExpect(jsonPath("$.data[0].player.id").value(rohit));
+        mvc.perform(get("/api/v1/leaderboards/batting?venue=999")).andExpect(status().isUnprocessableEntity());
+        call("/api/v1/head-to-head?team1=" + mi + "&team2=" + csk)
+                .andExpect(jsonPath("$.data.byVenue[0].venue.id").value(wankhede))
+                .andExpect(jsonPath("$.data.byVenue[0].team1Wins").value(1));
+    }
+
     @Test
     void playerSearchIsPagedAndMatchesAnyName() throws Exception {
         call("/api/v1/players?search=sharma")

@@ -5,6 +5,7 @@ export type Venue = Schemas['VenueDto'];
 export type VenueStats = Schemas['VenueStatsDto'];
 export type VenueSeasonStats = Schemas['VenueSeasonStatsDto'];
 export type ScoreBand = Schemas['ScoreBandDto'];
+export type VenueTeam = Schemas['VenueTeamDto'];
 export type VenueStatsQuery = QueryOf<'/api/v1/venues/{id}/stats'>;
 
 export const venuesApi = {
@@ -16,4 +17,6 @@ export const venuesApi = {
     getList<VenueSeasonStats>(`/venues/${id}/seasons`, query, signal),
   scoreDistribution: (id: number, query: VenueStatsQuery, signal?: AbortSignal) =>
     getList<ScoreBand>(`/venues/${id}/score-distribution`, query, signal),
+  teams: (id: number, query: VenueStatsQuery, signal?: AbortSignal) =>
+    getList<VenueTeam>(`/venues/${id}/teams`, query, signal),
 };

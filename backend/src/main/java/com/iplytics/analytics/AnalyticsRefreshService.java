@@ -27,11 +27,12 @@ public class AnalyticsRefreshService {
 
     /** Refresh order; the plain views (innings_context, team_match_result) need no refresh. */
     static final List<String> MATERIALIZED_VIEWS = List.of(
-            "analytics.innings_summary", "analytics.batting_innings", "analytics.bowling_innings");
+            "analytics.innings_summary", "analytics.batting_innings", "analytics.bowling_innings",
+            "analytics.innings_phase");
 
     static final List<String> ANALYTICS_OBJECTS = List.of(
             "analytics.innings_summary", "analytics.batting_innings", "analytics.bowling_innings",
-            "analytics.team_match_result");
+            "analytics.innings_phase", "analytics.team_match_result");
 
     private static final Logger log = LoggerFactory.getLogger(AnalyticsRefreshService.class);
     private static final int MAX_ERROR_LENGTH = 2000;

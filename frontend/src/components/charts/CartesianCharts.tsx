@@ -1,5 +1,5 @@
 import { EmptyState } from '@/components/states/EmptyState';
-import { axisStyle, baseOption, useChartOption } from './chartTheme';
+import { axisStyle, baseOption, legendStyle, useChartOption } from './chartTheme';
 import { EChart } from './EChart';
 
 export interface SeriesInput {
@@ -20,6 +20,10 @@ export interface CartesianChartProps {
   /** Horizontal bars (categories on the y axis), for ranked lists. */
   horizontal?: boolean;
   emptyTitle?: string;
+  /** Drill-down / cross-filter: called with the clicked category's index and label. */
+  onItemClick?: (index: number, category: string | number) => void;
+  /** Adds zoom and pan along the category axis (long series such as seasons or overs). */
+  zoom?: boolean;
 }
 
 type Kind = 'bar' | 'line' | 'area';
@@ -38,6 +42,8 @@ function CartesianChart({
   yAxisName,
   horizontal = false,
   emptyTitle = 'No data available',
+  onItemClick,
+  zoom = false,
 }: CartesianChartProps & { kind: Kind }) {
   const option = useChartOption(
     (theme) => {
@@ -61,13 +67,19 @@ function CartesianChart({
       return {
         ...baseOption(theme, ariaLabel),
         tooltip: { ...(baseOption(theme, ariaLabel).tooltip as object), trigger: 'axis' },
-        legend: series.length > 1 ? { top: 0, textStyle: { color: theme.text } } : undefined,
+        legend: series.length > 1 ? { top: 0, left: 0, ...legendStyle(theme) } : undefined,
         grid: {
           left: 8,
           right: 16,
-          top: series.length > 1 ? 36 : 16,
-          bottom: xAxisName ? 32 : 8,
+          top: 36,
+          bottom: (xAxisName ? 32 : 8) + (zoom ? 36 : 0),
         },
+        dataZoom: zoom
+          ? [
+              { type: 'inside', [horizontal ? 'yAxisIndex' : 'xAxisIndex']: 0 },
+              { type: 'slider', [horizontal ? 'yAxisIndex' : 'xAxisIndex']: 0, height: 18, bottom: 4 },
+            ]
+          : undefined,
         xAxis: horizontal ? valueAxis : categoryAxis,
         yAxis: horizontal ? categoryAxis : valueAxis,
         series: series.map((s) => ({
@@ -78,17 +90,37 @@ function CartesianChart({
           smooth: kind !== 'bar',
           symbolSize: 6,
           connectNulls: false,
-          areaStyle: kind === 'area' ? { opacity: 0.15 } : undefined,
-          itemStyle: s.color ? { color: s.color } : undefined,
+          symbol: 'circle',
+          showSymbol: categories.length <= 24,
+          lineStyle: kind === 'bar' ? undefined : { width: 2.5 },
+          areaStyle: kind === 'area' ? { opacity: 0.18 } : undefined,
+          itemStyle: {
+            ...(s.color ? { color: s.color } : {}),
+            ...(kind === 'bar' && !s.stack ? { borderRadius: horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0] } : {}),
+          },
           barMaxWidth: 28,
           emphasis: { focus: 'series' },
         })),
       };
     },
-    [kind, categories, series, ariaLabel, xAxisName, yAxisName, horizontal],
+    [kind, categories, series, ariaLabel, xAxisName, yAxisName, horizontal, zoom],
   );
   if (!hasData(categories, series)) return <EmptyState title={emptyTitle} />;
-  return <EChart option={option} height={height} ariaLabel={ariaLabel} />;
+  return (
+    <EChart
+      option={option}
+      height={height}
+      ariaLabel={ariaLabel}
+      onItemClick={
+        onItemClick
+          ? (event) => {
+              const category = categories[event.dataIndex];
+              if (category !== undefined) onItemClick(event.dataIndex, category);
+            }
+          : undefined
+      }
+    />
+  );
 }
 
 export function BarChart(props: CartesianChartProps) {
